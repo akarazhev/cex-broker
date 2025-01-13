@@ -18,6 +18,8 @@
         <rxjava.version>3.1.10</rxjava.version>
         <java-webSocket.version>1.6.0</java-webSocket.version>
         <kafka-clients.version>3.9.0</kafka-clients.version>
+        <jackson-databind.version>2.18.2</jackson-databind.version>
+        <logback-classic.version>1.5.16</logback-classic.version>
     </properties>
 
     <dependencies>
@@ -39,7 +41,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.18.2</version>
+            <version>${jackson-databind.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback-classic.version}</version>
         </dependency>
         <!-- Add your dependencies here -->
     </dependencies>
