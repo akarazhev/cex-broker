@@ -1,16 +1,15 @@
 package com.github.akarazhev.cexbroker;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.akarazhev.cexbroker.bybit.request.Requests;
 import com.github.akarazhev.cexbroker.client.ClientFactory;
 import com.github.akarazhev.cexbroker.client.EventListener;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.disposables.Disposable;
 import org.java_websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -22,9 +21,11 @@ public final class ObservableFactory {
             final AtomicInteger reconnectAttempts = new AtomicInteger(0);
             final int maxReconnectAttempts = 10; // Increased for more persistence
             final long maxReconnectDelay = 30000; // Max delay of 30 seconds
+            final long pingInterval = 20000; // 20 seconds
 
             final EventListener listener = new EventListener() {
                 private WebSocketClient client;
+                private Disposable pingDisposable;
 
                 @Override
                 public void setClient(final WebSocketClient client) {
@@ -34,7 +35,8 @@ public final class ObservableFactory {
                 @Override
                 public void onOpen() {
                     reconnectAttempts.set(0); // Reset reconnect attempts on successful connection
-                    subscribe(client, topics);
+                    client.send(Requests.subscription(topics).toJson());
+                    startPing();
                 }
 
                 @Override
@@ -44,25 +46,14 @@ public final class ObservableFactory {
 
                 @Override
                 public void onClose() {
+                    stopPing();
                     reconnect("Connection closed");
                 }
 
                 @Override
                 public void onError(final Throwable error) {
+                    stopPing();
                     reconnect("Error occurred: " + error.getMessage());
-                }
-
-                private void subscribe(final WebSocketClient client, final String[] topics) {
-                    final Map<String, Object> request = new HashMap<>();
-                    request.put("op", "subscribe");
-                    request.put("args", topics);
-
-                    final ObjectMapper objectMapper = new ObjectMapper();
-                    try {
-                        client.send(objectMapper.writeValueAsString(request));
-                    } catch (Exception e) {
-                        logger.error("Failed to subscribe to topics", e);
-                    }
                 }
 
                 private void reconnect(final String reason) {
@@ -73,7 +64,7 @@ public final class ObservableFactory {
                         emitter.onNext(reason + ". Reconnecting... (Attempt " + (attempts + 1) + ")");
 
                         Observable.timer(delay, TimeUnit.MILLISECONDS)
-                                .subscribe(__ -> {
+                                .subscribe($ -> {
                                     try {
                                         client = ClientFactory.createWebSocketClient(uri, this);
                                         client.connect();
@@ -84,6 +75,24 @@ public final class ObservableFactory {
                     } else {
                         logger.error("Max reconnection attempts reached. Closing observable.");
                         emitter.onComplete();
+                    }
+                }
+
+                private void startPing() {
+                    stopPing(); // Ensure any existing ping is stopped
+                    pingDisposable = Observable.interval(pingInterval, TimeUnit.MILLISECONDS)
+                            .subscribe($ -> sendPing());
+                }
+
+                private void stopPing() {
+                    if (pingDisposable != null && !pingDisposable.isDisposed()) {
+                        pingDisposable.dispose();
+                    }
+                }
+
+                private void sendPing() {
+                    if (client != null && client.isOpen()) {
+                        client.send(Requests.ping().toJson());
                     }
                 }
             };
