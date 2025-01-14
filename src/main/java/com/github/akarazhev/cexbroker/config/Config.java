@@ -13,9 +13,12 @@ public final class Config {
     }
 
     private Config() {
-        this.kafkaTopic = System.getenv("KAFKA_TOPIC");
-        this.kafkaBootstrapServers = System.getenv("KAFKA_BOOTSTRAP_SERVERS");
-        this.webSocketTopics = System.getenv("WEB_SOCKET_TOPICS");
+        String value = System.getenv("KAFKA_TOPIC");
+        this.kafkaTopic = value != null ? value : "CEX_BROKER";
+        value = System.getenv("KAFKA_BOOTSTRAP_SERVERS");
+        this.kafkaBootstrapServers = value != null ? value : "localhost:9092";
+        value = System.getenv("WEB_SOCKET_TOPICS");
+        this.webSocketTopics = value != null ? value : "tickers.BTCUSDT";
     }
 
     public static Config getConfig() {
@@ -27,7 +30,7 @@ public final class Config {
     }
 
     public String[] getWebSocketTopics() {
-        return new String[]{"tickers.BTCUSDT"};
+        return webSocketTopics.split(",");
     }
 
     public String getKafkaTopic() {
@@ -44,5 +47,14 @@ public final class Config {
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         return props;
+    }
+
+    @Override
+    public String toString() {
+        return "Config{" +
+                "kafkaTopic='" + kafkaTopic + '\'' +
+                ", kafkaBootstrapServers='" + kafkaBootstrapServers + '\'' +
+                ", webSocketTopics='" + webSocketTopics + '\'' +
+                '}';
     }
 }

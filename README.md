@@ -13,6 +13,6 @@ mvn clean package
 ## How to run
 
 ```bash
-podman build -t cex-broker:1.0 . 
-podman run -p 8080:8080 cex-broker:1.0
+podman build -t cex-broker:0.1 . 
+podman run -e KAFKA_TOPIC=CEX_BROKER -e KAFKA_BOOTSTRAP_SERVERS=localhost:9092 -e WEB_SOCKET_TOPICS=tickers.BTCUSDT cex-broker:0.1
 ```

@@ -9,6 +9,7 @@ public class Application {
     public static void main(String[] args) {
         long t = System.currentTimeMillis();
         Config config = Config.getConfig();
+        System.out.println(config + " is loaded");
 //        KafkaProducer<String, String> producer = new KafkaProducer<>(config.getKafkaProperties());
 //        MessageHandler messageHandler = new KafkaMessageHandler(producer, config.getKafkaTopic());
         Observable<String> observable = ObservableFactory.createBybitObservable(config.getWebSocketUrl(),
