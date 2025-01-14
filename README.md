@@ -50,7 +50,7 @@ This will create a JAR file with all dependencies included.
 To run the application locally:
 
 ```bash
-java -jar target/cex-broker-1.0-SNAPSHOT-jar-with-dependencies.jar
+java -jar target/cex-broker-0.1-SNAPSHOT-jar-with-dependencies.jar
 ```
 
 ### Running with Docker/Podman
