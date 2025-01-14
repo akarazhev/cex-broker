@@ -11,7 +11,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CexBroker {
+public class Application {
 
     private static final String WEBSOCKET_URL = "wss://stream-testnet.bybit.com/v5/public/linear";
     private static final String TOPIC = "tickers.BTCUSDT";
@@ -22,7 +22,7 @@ public class CexBroker {
                 @Override
                 public void onOpen(ServerHandshake handshakedata) {
                     System.out.println("WebSocket opened");
-                    CexBroker.onOpen(this, TOPIC);
+                    Application.onOpen(this, TOPIC);
                 }
 
                 @Override
@@ -51,7 +51,7 @@ public class CexBroker {
         });
 
         Disposable disposable = wsObservable
-                .map(CexBroker::receive)
+                .map(Application::receive)
                 .subscribe(
                         jsonNode -> System.out.println(jsonNode.toString()),
                         throwable -> System.err.println("Error: " + throwable),

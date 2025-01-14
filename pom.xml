@@ -68,7 +68,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.github.akarazhev.cexbroker.CexBroker</mainClass>
+                            <mainClass>com.github.akarazhev.cexbroker.Application</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
