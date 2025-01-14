@@ -65,10 +65,10 @@ public final class ObservableFactory {
                     }
                 }
 
-                private void reconnect(String reason) {
-                    int attempts = reconnectAttempts.getAndIncrement();
+                private void reconnect(final String reason) {
+                    final int attempts = reconnectAttempts.getAndIncrement();
                     if (attempts < maxReconnectAttempts) {
-                        long delay = Math.min(1000 * (long) Math.pow(2, attempts), maxReconnectDelay);
+                        final long delay = Math.min(1000 * (long) Math.pow(2, attempts), maxReconnectDelay);
                         logger.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
                         emitter.onNext(reason + ". Reconnecting... (Attempt " + (attempts + 1) + ")");
 
