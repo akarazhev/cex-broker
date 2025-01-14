@@ -59,7 +59,6 @@ public final class ObservableFactory {
         final ObjectMapper objectMapper = new ObjectMapper();
         try {
             client.send(objectMapper.writeValueAsString(request));
-            System.out.println("Subscribed to topics: " + String.join(", ", topics));
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
