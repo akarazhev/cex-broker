@@ -1,11 +1,11 @@
-package com.github.akarazhev.cexbroker;
+package com.github.akarazhev.cexbroker.client;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
 
-public final class WebSocketClientFactory {
+public final class ClientFactory {
 
     public static WebSocketClient createWebSocketClient(final URI uri, final EventListener listener) {
         return new WebSocketClient(uri) {
