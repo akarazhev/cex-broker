@@ -9,7 +9,9 @@ public final class Config {
     private final String webSocketTopics;
 
     private static final class Constants {
-        private final static String WEB_SOCKET_TESTNET_URL = "wss://stream-testnet.bybit.com/v5/public/linear";
+        private static final class Wss {
+            private final static String SPOT_PUBLIC_TESTNET_URL = "wss://stream-testnet.bybit.com/v5/public/spot";
+        }
     }
 
     private Config() {
@@ -26,7 +28,7 @@ public final class Config {
     }
 
     public URI getWebSocketUrl() {
-        return URI.create(Constants.WEB_SOCKET_TESTNET_URL);
+        return URI.create(Constants.Wss.SPOT_PUBLIC_TESTNET_URL);
     }
 
     public String[] getWebSocketTopics() {
