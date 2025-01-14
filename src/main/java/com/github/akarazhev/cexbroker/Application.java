@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 public class Application {
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
-
     public static void main(String[] args) {
         long t = System.currentTimeMillis();
         Config config = Config.getConfig();
