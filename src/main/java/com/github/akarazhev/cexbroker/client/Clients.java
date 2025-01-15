@@ -5,9 +5,12 @@ import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
 
-public final class ClientFactory {
+public final class Clients {
 
-    public static WebSocketClient createWebSocketClient(final URI uri, final EventListener listener) {
+    private Clients() {
+    }
+
+    public static WebSocketClient newWsClient(final URI uri, final EventListener listener) {
         return new WebSocketClient(uri) {
             @Override
             public void onOpen(ServerHandshake handshakedata) {

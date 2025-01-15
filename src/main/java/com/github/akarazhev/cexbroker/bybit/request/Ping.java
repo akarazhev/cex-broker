@@ -7,10 +7,6 @@ public final class Ping {
         this.op = "ping";
     }
 
-    public String getOp() {
-        return op;
-    }
-
     public String toJson() {
         return "{\"op\":\"" + op + "\"}";
     }

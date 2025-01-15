@@ -2,11 +2,14 @@ package com.github.akarazhev.cexbroker.bybit.request;
 
 public final class Requests {
 
-    public static Subscription subscription(final String[] topics) {
+    private Requests() {
+    }
+
+    public static Subscription ofSubscription(final String[] topics) {
         return new Subscription("subscribe", topics);
     }
 
-    public static Ping ping() {
+    public static Ping ofPing() {
         return new Ping();
     }
 }
