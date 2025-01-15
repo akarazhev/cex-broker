@@ -64,9 +64,9 @@ public class BybitObservable implements ObservableOnSubscribe<String> {
                 reconnect("Error occurred: " + (error.getMessage() == null ? error : error.getMessage()));
             }
 
-            private void reconnect(final String reason) {
-                final int attempts = reconnectAttempts.getAndIncrement();
-                if (attempts < MAX_RECONNECT_ATTEMPTS) {
+            private void reconnect(String reason) {
+                while (reconnectAttempts.get() < MAX_RECONNECT_ATTEMPTS) {
+                    final int attempts = reconnectAttempts.getAndIncrement();
                     final long delay = Math.min(1000 * (long) Math.pow(2, attempts), MAX_RECONNECT_DELAY);
                     LOGGER.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
                     try {
@@ -74,16 +74,19 @@ public class BybitObservable implements ObservableOnSubscribe<String> {
                         if (client.connectBlocking(delay, TimeUnit.MILLISECONDS)) {
                             LOGGER.warn("Reconnected after {} ms", delay);
                             emitter.setCancellable(client::close);
+                            return; // Successfully reconnected, exit the method
                         } else {
-                            reconnect("Failed to reconnect");
+                            reason = "Failed to reconnect";
                         }
                     } catch (InterruptedException e) {
                         LOGGER.error("Error reconnecting to the server: {}", e.getMessage());
+                        Thread.currentThread().interrupt(); // Restore the interrupt status
+                        return; // Exit the reconnection loop if interrupted
                     }
-                } else {
-                    LOGGER.error("Max reconnection attempts reached. Closing observable.");
-                    emitter.onComplete();
                 }
+                // If we've exhausted all attempts
+                LOGGER.error("Max reconnection attempts reached. Closing observable.");
+                emitter.onComplete();
             }
 
             private void startPing() {
