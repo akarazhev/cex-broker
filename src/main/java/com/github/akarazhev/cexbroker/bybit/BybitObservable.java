@@ -38,7 +38,7 @@ public class BybitObservable implements ObservableOnSubscribe<String> {
     @Override
     public void subscribe(@NonNull ObservableEmitter<String> emitter) throws Throwable {
         final EventListener listener = new EventListener() {
-            private Disposable ping, reconnect;
+            private Disposable ping;
 
             @Override
             public void onOpen() {
@@ -61,7 +61,7 @@ public class BybitObservable implements ObservableOnSubscribe<String> {
             @Override
             public void onError(final Throwable error) {
                 stopPing();
-                reconnect("Error occurred: " + error.getMessage());
+                reconnect("Error occurred: " + (error.getMessage() == null ? error : error.getMessage()));
             }
 
             private void reconnect(final String reason) {
@@ -69,22 +69,19 @@ public class BybitObservable implements ObservableOnSubscribe<String> {
                 if (attempts < MAX_RECONNECT_ATTEMPTS) {
                     final long delay = Math.min(1000 * (long) Math.pow(2, attempts), MAX_RECONNECT_DELAY);
                     LOGGER.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
-                    emitter.onNext(reason + ". Reconnecting... (Attempt " + (attempts + 1) + ")");
-                    reconnect = Observable.timer(delay, TimeUnit.MILLISECONDS)
-                            .subscribe($ -> {
-                                try {
-                                    client = Clients.newWsClient(config.getWebSocketUri(), this);
-                                    client.connect();
-                                } catch (Exception e) {
-                                    reconnect("Failed to reconnect");
-                                }
-                            });
+                    try {
+                        client = Clients.newWsClient(config.getWebSocketUri(), this);
+                        if (client.connectBlocking(delay, TimeUnit.MILLISECONDS)) {
+                            LOGGER.warn("Reconnected after {} ms", delay);
+                            emitter.setCancellable(client::close);
+                        } else {
+                            reconnect("Failed to reconnect");
+                        }
+                    } catch (InterruptedException e) {
+                        LOGGER.error("Error reconnecting to the server: {}", e.getMessage());
+                    }
                 } else {
                     LOGGER.error("Max reconnection attempts reached. Closing observable.");
-                    if (!reconnect.isDisposed()) {
-                        reconnect.dispose();
-                    }
-
                     emitter.onComplete();
                 }
             }
