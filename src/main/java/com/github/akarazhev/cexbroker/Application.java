@@ -25,6 +25,10 @@ public class Application {
 //                    producer.close();
                 }
         );
-        LOGGER.info("Application started after {} ms", System.currentTimeMillis() - t);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOGGER.info("Shutting down CEX Broker...");
+            bybitDisposable.dispose();
+        }));
+        LOGGER.info("CEX Broker started after {} ms", System.currentTimeMillis() - t);
     }
 }
