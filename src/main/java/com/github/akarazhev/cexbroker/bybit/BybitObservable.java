@@ -38,7 +38,7 @@ public class BybitObservable implements ObservableOnSubscribe<String> {
     @Override
     public void subscribe(@NonNull ObservableEmitter<String> emitter) throws Throwable {
         final EventListener listener = new EventListener() {
-            private Disposable pingDisposable;
+            private Disposable ping, reconnect;
 
             @Override
             public void onOpen() {
@@ -70,8 +70,7 @@ public class BybitObservable implements ObservableOnSubscribe<String> {
                     final long delay = Math.min(1000 * (long) Math.pow(2, attempts), MAX_RECONNECT_DELAY);
                     LOGGER.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
                     emitter.onNext(reason + ". Reconnecting... (Attempt " + (attempts + 1) + ")");
-
-                    Observable.timer(delay, TimeUnit.MILLISECONDS)
+                    reconnect = Observable.timer(delay, TimeUnit.MILLISECONDS)
                             .subscribe($ -> {
                                 try {
                                     client = Clients.newWsClient(config.getWebSocketUri(), this);
@@ -82,19 +81,23 @@ public class BybitObservable implements ObservableOnSubscribe<String> {
                             });
                 } else {
                     LOGGER.error("Max reconnection attempts reached. Closing observable.");
+                    if (!reconnect.isDisposed()) {
+                        reconnect.dispose();
+                    }
+
                     emitter.onComplete();
                 }
             }
 
             private void startPing() {
                 stopPing(); // Ensure any existing ping is stopped
-                pingDisposable = Observable.interval(PING_INTERVAL, TimeUnit.MILLISECONDS)
+                ping = Observable.interval(PING_INTERVAL, TimeUnit.MILLISECONDS)
                         .subscribe($ -> sendPing());
             }
 
             private void stopPing() {
-                if (pingDisposable != null && !pingDisposable.isDisposed()) {
-                    pingDisposable.dispose();
+                if (ping != null && !ping.isDisposed()) {
+                    ping.dispose();
                 }
             }
 

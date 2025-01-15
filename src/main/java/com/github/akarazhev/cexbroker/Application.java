@@ -1,7 +1,6 @@
 package com.github.akarazhev.cexbroker;
 
 import com.github.akarazhev.cexbroker.bybit.config.Config;
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +14,7 @@ public class Application {
         LOGGER.info(config.toString());
 //        KafkaProducer<String, String> producer = new KafkaProducer<>(config.getKafkaProperties());
 //        MessageHandler messageHandler = new KafkaMessageHandler(producer, config.getKafkaTopic());
-        Observable<String> bybitObservable = Observables.ofBybit(config);
-        Disposable bybitDisposable = bybitObservable.subscribe(
+        Disposable bybitDisposable = Observables.ofBybit(config).subscribe(
                 message -> {
                     LOGGER.info("Received: {}", message);
 //                    messageHandler.handleMessage(message);
