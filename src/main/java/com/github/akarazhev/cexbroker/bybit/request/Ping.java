@@ -1,11 +1,6 @@
 package com.github.akarazhev.cexbroker.bybit.request;
 
-public final class Ping {
-    private final String op;
-
-    public Ping() {
-        this.op = "ping";
-    }
+public record Ping(String op) {
 
     public String toJson() {
         return "{\"op\":\"" + op + "\"}";

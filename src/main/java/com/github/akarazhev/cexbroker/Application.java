@@ -12,7 +12,7 @@ public class Application {
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
     public static void main(final String[] args) {
-        long t = System.currentTimeMillis();
+        final long t = System.currentTimeMillis();
         final Config config = Config.getConfig();
         LOGGER.info(config.toString());
 //        KafkaProducer<String, String> producer = new KafkaProducer<>(config.getKafkaProperties());

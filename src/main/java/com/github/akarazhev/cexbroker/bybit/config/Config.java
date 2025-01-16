@@ -1,5 +1,7 @@
 package com.github.akarazhev.cexbroker.bybit.config;
 
+import com.github.akarazhev.cexbroker.bybit.Constants;
+
 import java.net.URI;
 import java.util.Arrays;
 
@@ -8,11 +10,11 @@ public final class Config {
     private final String[] tickerTopics;
 
     private Config() {
-        this.webSocketUri = URI.create(Constants.WsPublicStream.SPOT_TEST_URL);
-        String value = System.getenv(Constants.Keys.BYBIT_TICKER_TOPICS);
+        this.webSocketUri = URI.create(Constants.Config.WsPublicStream.SPOT_TEST_URL);
+        String value = System.getenv(Constants.Config.Keys.BYBIT_TICKER_TOPICS);
         this.tickerTopics = value != null && !value.isBlank() ?
                 value.split(",") :
-                Constants.Defaults.BYBIT_TICKER_TOPICS;
+                Constants.Config.Defaults.BYBIT_TICKER_TOPICS;
     }
 
     public static Config getConfig() {
