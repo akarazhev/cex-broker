@@ -1,4 +1,4 @@
-package com.github.akarazhev.cexbroker.client;
+package com.github.akarazhev.cexbroker.net;
 
 public interface EventListener {
 

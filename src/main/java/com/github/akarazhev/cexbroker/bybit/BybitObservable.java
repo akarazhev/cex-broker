@@ -2,8 +2,8 @@ package com.github.akarazhev.cexbroker.bybit;
 
 import com.github.akarazhev.cexbroker.bybit.config.Config;
 import com.github.akarazhev.cexbroker.bybit.request.Requests;
-import com.github.akarazhev.cexbroker.client.Clients;
-import com.github.akarazhev.cexbroker.client.EventListener;
+import com.github.akarazhev.cexbroker.net.Clients;
+import com.github.akarazhev.cexbroker.net.EventListener;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.ObservableEmitter;
@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class BybitObservable implements ObservableOnSubscribe<String> {
+public final class BybitObservable implements ObservableOnSubscribe<String> {
     private final static Logger LOGGER = LoggerFactory.getLogger(BybitObservable.class);
     private final static int MAX_RECONNECT_ATTEMPTS = 10; // Increased for more persistence
     private final static long MAX_RECONNECT_DELAY = 30000; // Max delay of 30 seconds

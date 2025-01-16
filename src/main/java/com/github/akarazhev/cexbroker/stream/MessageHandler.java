@@ -1,4 +1,4 @@
-package com.github.akarazhev.cexbroker.kafka;
+package com.github.akarazhev.cexbroker.stream;
 
 public interface MessageHandler {
 

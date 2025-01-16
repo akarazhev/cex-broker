@@ -1,4 +1,4 @@
-package com.github.akarazhev.cexbroker.client;
+package com.github.akarazhev.cexbroker.net;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;

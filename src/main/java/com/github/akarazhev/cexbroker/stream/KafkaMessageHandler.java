@@ -1,4 +1,4 @@
-package com.github.akarazhev.cexbroker.kafka;
+package com.github.akarazhev.cexbroker.stream;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;

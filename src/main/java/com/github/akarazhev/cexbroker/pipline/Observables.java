@@ -1,4 +1,4 @@
-package com.github.akarazhev.cexbroker;
+package com.github.akarazhev.cexbroker.pipline;
 
 import com.github.akarazhev.cexbroker.bybit.BybitObservable;
 import com.github.akarazhev.cexbroker.bybit.config.Config;

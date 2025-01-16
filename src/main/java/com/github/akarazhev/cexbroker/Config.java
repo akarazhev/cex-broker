@@ -1,4 +1,4 @@
-package com.github.akarazhev.cexbroker.config;
+package com.github.akarazhev.cexbroker;
 
 import java.util.Properties;
 
