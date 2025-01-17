@@ -6,34 +6,33 @@ import java.net.URI;
 import java.util.Arrays;
 
 public final class Config {
-    private final URI webSocketUri;
-    private final String[] tickerTopics;
+    private final static URI WEB_SOCKET_URI;
+    private final static String[] TICKER_TOPICS;
 
-    private Config() {
-        this.webSocketUri = URI.create(Constants.Config.WsPublicStream.SPOT_TEST_URL);
-        String value = System.getenv(Constants.Config.Keys.BYBIT_TICKER_TOPICS);
-        this.tickerTopics = value != null && !value.isBlank() ?
+    static {
+        WEB_SOCKET_URI = URI.create(Constants.Config.WsPublicStream.SPOT_TEST_URL);
+        final String value = System.getenv(Constants.Config.Keys.BYBIT_TICKER_TOPICS);
+        TICKER_TOPICS = value != null && !value.isBlank() ?
                 value.split(",") :
                 Constants.Config.Defaults.BYBIT_TICKER_TOPICS;
     }
 
-    public static Config getConfig() {
-        return new Config();
+    private Config() {
+        throw new UnsupportedOperationException();
     }
 
-    public URI getWebSocketUri() {
-        return webSocketUri;
+    public static URI getWebSocketUri() {
+        return WEB_SOCKET_URI;
     }
 
-    public String[] getTickerTopics() {
-        return tickerTopics;
+    public static String[] getTickerTopics() {
+        return TICKER_TOPICS;
     }
 
-    @Override
-    public String toString() {
+    public static String print() {
         return "Bybit Config {" +
-                "webSocketUri=" + webSocketUri +
-                ", tickerTopics=" + Arrays.toString(tickerTopics) +
+                "webSocketUri=" + WEB_SOCKET_URI +
+                ", tickerTopics=" + Arrays.toString(TICKER_TOPICS) +
                 '}';
     }
 }
