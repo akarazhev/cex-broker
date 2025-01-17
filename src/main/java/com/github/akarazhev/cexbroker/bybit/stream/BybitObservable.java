@@ -1,4 +1,4 @@
-package com.github.akarazhev.cexbroker.bybit;
+package com.github.akarazhev.cexbroker.bybit.stream;
 
 import com.github.akarazhev.cexbroker.bybit.config.Config;
 import com.github.akarazhev.cexbroker.bybit.request.Requests;
@@ -23,16 +23,14 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
     private final static long PING_INTERVAL = 20000; // 20 seconds
 
     private final AtomicInteger reconnectAttempts = new AtomicInteger(0);
-    private final Config config;
 
     private WebSocketClient client;
 
-    private BybitObservable(final Config config) {
-        this.config = config;
+    private BybitObservable() {
     }
 
-    public static BybitObservable create(final Config config) {
-        return new BybitObservable(config);
+    public static BybitObservable create() {
+        return new BybitObservable();
     }
 
     @Override
@@ -43,7 +41,7 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
             @Override
             public void onOpen() {
                 reconnectAttempts.set(0); // Reset reconnect attempts on successful connection
-                client.send(Requests.ofSubscription(config.getTickerTopics()).toJson());
+                client.send(Requests.ofSubscription(Config.getTickerTopics()).toJson());
                 startPing();
             }
 
@@ -70,7 +68,7 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
                     final long delay = Math.min(1000 * (long) Math.pow(2, attempts), MAX_RECONNECT_DELAY);
                     LOGGER.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
                     try {
-                        client = Clients.newWsClient(config.getWebSocketUri(), this);
+                        client = Clients.newWsClient(Config.getWebSocketUri(), this);
                         if (client.connectBlocking(delay, TimeUnit.MILLISECONDS)) {
                             LOGGER.warn("Reconnected after {} ms", delay);
                             emitter.setCancellable(client::close);
@@ -108,7 +106,7 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
             }
         };
 
-        client = Clients.newWsClient(config.getWebSocketUri(), listener);
+        client = Clients.newWsClient(Config.getWebSocketUri(), listener);
         client.connect();
         emitter.setCancellable(client::close);
     }
