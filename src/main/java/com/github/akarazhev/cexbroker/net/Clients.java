@@ -8,6 +8,7 @@ import java.net.URI;
 public final class Clients {
 
     private Clients() {
+        throw new UnsupportedOperationException();
     }
 
     public static WebSocketClient newWsClient(final URI uri, final EventListener listener) {
