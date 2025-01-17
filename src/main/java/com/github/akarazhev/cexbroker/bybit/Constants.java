@@ -2,14 +2,17 @@ package com.github.akarazhev.cexbroker.bybit;
 
 public final class Constants {
     private Constants() {
+        throw new UnsupportedOperationException();
     }
 
     public static final class Config {
         private Config() {
+            throw new UnsupportedOperationException();
         }
 
         public static final class Keys {
             private Keys() {
+                throw new UnsupportedOperationException();
             }
 
             public final static String BYBIT_TICKER_TOPICS = "BYBIT_TICKER_TOPICS";
@@ -17,6 +20,7 @@ public final class Constants {
 
         public static final class Defaults {
             private Defaults() {
+                throw new UnsupportedOperationException();
             }
 
             public final static String[] BYBIT_TICKER_TOPICS = new String[]{"tickers.BTCUSDT"};
@@ -24,6 +28,7 @@ public final class Constants {
 
         public static final class WsPublicStream {
             private WsPublicStream() {
+                throw new UnsupportedOperationException();
             }
 
             public final static String SPOT_TEST_URL = "wss://stream-testnet.bybit.com/v5/public/spot";
@@ -32,6 +37,7 @@ public final class Constants {
 
         public static final class WsPrivateStream {
             private WsPrivateStream() {
+                throw new UnsupportedOperationException();
             }
 
             public final static String TEST_URL = "wss://stream-testnet.bybit.com/v5/private";
@@ -40,6 +46,7 @@ public final class Constants {
 
         public static final class WsOrderEntry {
             private WsOrderEntry() {
+                throw new UnsupportedOperationException();
             }
 
             public final static String TEST_URL = "wss://stream-testnet.bybit.com/v5/trade";
@@ -49,6 +56,7 @@ public final class Constants {
 
     public static final class Filters {
         private Filters() {
+            throw new UnsupportedOperationException();
         }
 
         public final static String TOPIC = "topic";
@@ -56,6 +64,7 @@ public final class Constants {
 
     public static final class Requests {
         private Requests() {
+            throw new UnsupportedOperationException();
         }
 
         public final static String SUBSCRIBE = "subscribe";
