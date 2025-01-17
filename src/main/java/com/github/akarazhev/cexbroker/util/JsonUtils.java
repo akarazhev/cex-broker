@@ -26,6 +26,7 @@ public final class JsonUtils {
     }
 
     private JsonUtils() {
+        throw new UnsupportedOperationException();
     }
 
     public static Map<String, Object> jsonToMap(final String json) throws IOException {
