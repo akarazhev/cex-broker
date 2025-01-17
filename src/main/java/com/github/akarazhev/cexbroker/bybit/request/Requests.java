@@ -5,6 +5,7 @@ import com.github.akarazhev.cexbroker.bybit.Constants;
 public final class Requests {
 
     private Requests() {
+        throw new UnsupportedOperationException();
     }
 
     public static Subscription ofSubscription(final String[] topics) {
