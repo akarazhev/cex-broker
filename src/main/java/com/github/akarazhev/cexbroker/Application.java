@@ -1,7 +1,14 @@
 package com.github.akarazhev.cexbroker;
 
-import com.github.akarazhev.cexbroker.bybit.config.Config;
-import com.github.akarazhev.cexbroker.stream.*;
+import com.github.akarazhev.cexbroker.stream.Config;
+import com.github.akarazhev.cexbroker.stream.Filter;
+import com.github.akarazhev.cexbroker.stream.Filters;
+import com.github.akarazhev.cexbroker.stream.Mapper;
+import com.github.akarazhev.cexbroker.stream.Mappers;
+import com.github.akarazhev.cexbroker.stream.Observables;
+import com.github.akarazhev.cexbroker.stream.StreamHandler;
+import com.github.akarazhev.cexbroker.stream.Subscriber;
+import com.github.akarazhev.cexbroker.stream.Subscribers;
 import io.reactivex.rxjava3.disposables.Disposable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +21,7 @@ public class Application {
     public static void main(final String[] args) {
         final long t = System.currentTimeMillis();
         LOGGER.info("Starting CEX Broker...");
+        LOGGER.info(com.github.akarazhev.cexbroker.bybit.config.Config.print());
         LOGGER.info(Config.print());
 //        final StreamHandler streamHandler = new StreamProducer();
         final StreamHandler consoleHandler = new StreamHandler() {
