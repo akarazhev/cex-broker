@@ -17,6 +17,6 @@ public final class BybitFilter implements Filter {
 
     @Override
     public Predicate<Map<String, Object>> filter() {
-        return o -> o.containsKey(Constants.Filters.TOPIC);
+        return o -> o.containsKey(Constants.Topics.TOPIC_FIELD);
     }
 }

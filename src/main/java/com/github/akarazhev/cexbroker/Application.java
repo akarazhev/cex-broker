@@ -18,8 +18,8 @@ public class Application {
 //        final StreamHandler streamHandler = new StreamProducer();
         final StreamHandler consoleHandler = new StreamHandler() {
             @Override
-            public void handle(final Map<String, Object> data) {
-                LOGGER.info("Received: {}", data);
+            public void handle(final String topic, final Map<String, Object> data) {
+                LOGGER.info("Topic: {}, Data: {}", topic, data);
             }
 
             @Override

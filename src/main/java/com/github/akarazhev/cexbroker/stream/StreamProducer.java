@@ -7,15 +7,13 @@ import java.util.Map;
 
 public final class StreamProducer implements StreamHandler {
     private final KafkaProducer<String, Map<String, Object>> producer;
-    private final String topic;
 
     public StreamProducer() {
         this.producer = new KafkaProducer<>(Config.getKafkaProperties());
-        this.topic = Config.getKafkaTopic();
     }
 
     @Override
-    public void handle(final Map<String, Object> data) {
+    public void handle(final String topic, final Map<String, Object> data) {
         producer.send(new ProducerRecord<>(topic, data));
     }
 

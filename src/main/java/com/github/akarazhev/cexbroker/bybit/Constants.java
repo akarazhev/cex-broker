@@ -54,12 +54,13 @@ public final class Constants {
         }
     }
 
-    public static final class Filters {
-        private Filters() {
+    public static final class Topics {
+        private Topics() {
             throw new UnsupportedOperationException();
         }
 
-        public final static String TOPIC = "topic";
+        public final static String STREAM_TOPIC_PREFIX = "bybit";
+        public final static String TOPIC_FIELD = "topic";
     }
 
     public static final class Requests {
