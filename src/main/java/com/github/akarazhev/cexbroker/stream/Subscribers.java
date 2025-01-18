@@ -8,7 +8,7 @@ public final class Subscribers {
         throw new UnsupportedOperationException();
     }
 
-    public static Subscriber ofBybit(final DataHandler handler) {
+    public static Subscriber ofBybit(final StreamHandler handler) {
         return BybitSubscriber.create(handler);
     }
 }

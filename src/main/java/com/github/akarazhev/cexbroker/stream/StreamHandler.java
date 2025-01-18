@@ -2,9 +2,9 @@ package com.github.akarazhev.cexbroker.stream;
 
 import java.util.Map;
 
-public interface DataHandler {
+public interface StreamHandler {
 
-    void handle(final Map<String, Object> object);
+    void handle(final Map<String, Object> data);
 
     void close();
 }

@@ -1,8 +1,7 @@
 package com.github.akarazhev.cexbroker.bybit.stream;
 
-import com.github.akarazhev.cexbroker.bybit.config.Config;
 import com.github.akarazhev.cexbroker.stream.Subscriber;
-import com.github.akarazhev.cexbroker.stream.DataHandler;
+import com.github.akarazhev.cexbroker.stream.StreamHandler;
 import io.reactivex.rxjava3.functions.Action;
 import io.reactivex.rxjava3.functions.Consumer;
 import org.slf4j.Logger;
@@ -12,13 +11,13 @@ import java.util.Map;
 
 public final class BybitSubscriber implements Subscriber {
     private static final Logger LOGGER = LoggerFactory.getLogger(BybitSubscriber.class);
-    private final DataHandler handler;
+    private final StreamHandler handler;
 
-    private BybitSubscriber(final DataHandler handler) {
+    private BybitSubscriber(final StreamHandler handler) {
         this.handler = handler;
     }
 
-    public static BybitSubscriber create(final DataHandler handler) {
+    public static BybitSubscriber create(final StreamHandler handler) {
         return new BybitSubscriber(handler);
     }
 

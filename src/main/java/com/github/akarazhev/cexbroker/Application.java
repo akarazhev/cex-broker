@@ -15,13 +15,11 @@ public class Application {
         final long t = System.currentTimeMillis();
         LOGGER.info("Starting CEX Broker...");
         LOGGER.info(Config.print());
-//        KafkaProducer<String, String> producer = new KafkaProducer<>(config.getKafkaProperties());
-//        MessageHandler messageHandler = new KafkaMessageHandler(producer, config.getKafkaTopic());
-//        DataHandler handler = object -> LOGGER.info("Received: {}", object);
-        DataHandler handler = new DataHandler() {
+//        final StreamHandler streamHandler = new StreamProducer();
+        final StreamHandler consoleHandler = new StreamHandler() {
             @Override
-            public void handle(Map<String, Object> object) {
-                LOGGER.info("Received: {}", object);
+            public void handle(final Map<String, Object> data) {
+                LOGGER.info("Received: {}", data);
             }
 
             @Override
@@ -31,7 +29,7 @@ public class Application {
         };
         final Mapper bybitMapper = Mappers.ofBybit();
         final Filter bybitFilter = Filters.ofBybit();
-        final Subscriber bybitSubscriber = Subscribers.ofBybit(handler);
+        final Subscriber bybitSubscriber = Subscribers.ofBybit(consoleHandler);
         final Disposable bybitDisposable = Observables.ofBybit()
                 .map(bybitMapper.map())
                 .filter(bybitFilter.filter())
