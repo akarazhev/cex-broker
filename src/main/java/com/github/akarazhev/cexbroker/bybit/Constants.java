@@ -23,7 +23,7 @@ public final class Constants {
                 throw new UnsupportedOperationException();
             }
 
-            public final static String[] BYBIT_TICKER_TOPICS = new String[]{"tickers.BTCUSDT"};
+            public final static String[] BYBIT_TICKER_TOPICS = new String[]{"tickers.BTCUSDT", "tickers.ETHUSDT"};
         }
 
         public static final class WsPublicStream {
