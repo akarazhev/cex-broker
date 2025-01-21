@@ -1,14 +1,11 @@
 package com.github.akarazhev.cexbroker.stream;
 
 import com.github.akarazhev.cexbroker.util.JsonUtils;
+import org.apache.kafka.common.KafkaException;
 
-import java.util.Map;
+import java.io.IOException;
 
 public final class Serializer<T> implements org.apache.kafka.common.serialization.Serializer<T> {
-
-    @Override
-    public void configure(Map<String, ?> configs, boolean isKey) {
-    }
 
     @Override
     public byte[] serialize(String topic, T data) {
@@ -18,12 +15,8 @@ public final class Serializer<T> implements org.apache.kafka.common.serializatio
 
         try {
             return JsonUtils.objectToBytes(data);
-        } catch (Exception e) {
-            throw new RuntimeException("Error serializing JSON message", e);
+        } catch (IOException e) {
+            throw new KafkaException("Failed to serialize data", e);
         }
-    }
-
-    @Override
-    public void close() {
     }
 }

@@ -5,14 +5,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
 
 public final class JsonUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtils.class);
     private static final ObjectMapper MAPPER;
     private static final ObjectReader READER;
     private static final ObjectWriter WRITER;
