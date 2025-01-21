@@ -6,6 +6,7 @@ import com.github.akarazhev.cexbroker.stream.Filters;
 import com.github.akarazhev.cexbroker.stream.Mapper;
 import com.github.akarazhev.cexbroker.stream.Mappers;
 import com.github.akarazhev.cexbroker.stream.Observables;
+import com.github.akarazhev.cexbroker.stream.StreamHandler;
 import com.github.akarazhev.cexbroker.stream.StreamProducer;
 import com.github.akarazhev.cexbroker.stream.Subscriber;
 import com.github.akarazhev.cexbroker.stream.Subscribers;
@@ -23,7 +24,8 @@ public final class Application {
         LOGGER.info(Config.print());
         final Mapper bybitMapper = Mappers.ofBybit();
         final Filter bybitFilter = Filters.ofBybit();
-        final Subscriber bybitSubscriber = Subscribers.ofBybit(new StreamProducer());
+        final StreamHandler bybitHandler = new StreamProducer();
+        final Subscriber bybitSubscriber = Subscribers.ofBybit(bybitHandler);
         final Disposable bybitDisposable = Observables.ofBybit()
                 .map(bybitMapper.map())
                 .filter(bybitFilter.filter())
@@ -31,6 +33,7 @@ public final class Application {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("Shutting down CEX Broker...");
             bybitDisposable.dispose();
+            bybitHandler.close();
         }));
         LOGGER.info("CEX Broker has been started in {} ms", System.currentTimeMillis() - t);
     }
