@@ -32,4 +32,8 @@ public final class JsonUtils {
     public static Map<String, Object> jsonToMap(final String json) throws IOException {
         return READER.forType(Map.class).readValue(json);
     }
+
+    public static <T> byte[] objectToBytes(final T object) throws IOException {
+        return WRITER.writeValueAsBytes(object);
+    }
 }
