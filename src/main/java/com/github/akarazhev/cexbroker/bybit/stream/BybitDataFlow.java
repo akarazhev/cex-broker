@@ -5,9 +5,9 @@ import com.github.akarazhev.cexbroker.bybit.request.Requests;
 import com.github.akarazhev.cexbroker.net.Clients;
 import com.github.akarazhev.cexbroker.net.EventListener;
 import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.ObservableEmitter;
-import io.reactivex.rxjava3.core.ObservableOnSubscribe;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableEmitter;
+import io.reactivex.rxjava3.core.FlowableOnSubscribe;
 import io.reactivex.rxjava3.disposables.Disposable;
 import org.java_websocket.client.WebSocketClient;
 import org.slf4j.Logger;
@@ -19,8 +19,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public final class BybitObservable implements ObservableOnSubscribe<String> {
-    private final static Logger LOGGER = LoggerFactory.getLogger(BybitObservable.class);
+public final class BybitDataFlow implements FlowableOnSubscribe<String> {
+    private final static Logger LOGGER = LoggerFactory.getLogger(BybitDataFlow.class);
     private final static int MAX_RECONNECT_ATTEMPTS = 10; // Increased for more persistence
     private final static long MAX_RECONNECT_DELAY = 30000; // Max delay of 30 seconds
     private final static long PING_INTERVAL = 20000; // 20 seconds
@@ -30,15 +30,15 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
 
     private WebSocketClient client;
 
-    private BybitObservable() {
+    private BybitDataFlow() {
     }
 
-    public static BybitObservable create() {
-        return new BybitObservable();
+    public static BybitDataFlow create() {
+        return new BybitDataFlow();
     }
 
     @Override
-    public void subscribe(@NonNull ObservableEmitter<String> emitter) throws Throwable {
+    public void subscribe(@NonNull FlowableEmitter<String> emitter) throws Throwable {
         final EventListener listener = new EventListener() {
             private Disposable ping;
 
@@ -100,7 +100,7 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
 
             private void startPing() {
                 stopPing(); // Ensure any existing ping is stopped
-                ping = Observable.interval(PING_INTERVAL, TimeUnit.MILLISECONDS)
+                ping = Flowable.interval(PING_INTERVAL, TimeUnit.MILLISECONDS)
                         .subscribe($ -> sendPing());
             }
 
