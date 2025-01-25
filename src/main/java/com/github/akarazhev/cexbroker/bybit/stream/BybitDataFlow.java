@@ -21,17 +21,22 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class BybitDataFlow implements FlowableOnSubscribe<String> {
-    private final static Logger LOGGER = LoggerFactory.getLogger(BybitDataFlow.class);
-    // Reconnection constants
-    private final static int MAX_RECONNECT_ATTEMPTS = 10; // Increased for more persistence
-    private final static long MAX_RECONNECT_DELAY = 30000; // Max delay of 30 seconds
-    // Ping constants
-    private static final long PING_INTERVAL = 20000; // 20 seconds
-    private static final long PONG_TIMEOUT = 10000; // 10 seconds
+    private static final class Constants {
 
+        private Constants() {
+            throw new UnsupportedOperationException();
+        }
+        // Reconnection constants
+        private final static int MAX_RECONNECT_ATTEMPTS = 10; // Increased for more persistence
+        private final static long MAX_RECONNECT_DELAY = 30000; // Max delay of 30 seconds
+        // Ping constants
+        private static final long PING_INTERVAL = 20000; // 20 seconds
+        private static final long PONG_TIMEOUT = 10000; // 10 seconds
+    }
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(BybitDataFlow.class);
     private final Lock reconnectLock = new ReentrantLock();
     private final AtomicInteger reconnectAttempts = new AtomicInteger(0);
-
     private WebSocketClient client;
 
     private BybitDataFlow() {
@@ -87,9 +92,9 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             private void reconnect(String reason) {
                 if (reconnectLock.tryLock()) {
                     try {
-                        while (reconnectAttempts.get() < MAX_RECONNECT_ATTEMPTS) {
+                        while (reconnectAttempts.get() < Constants.MAX_RECONNECT_ATTEMPTS) {
                             final int attempts = reconnectAttempts.getAndIncrement();
-                            final long delay = Math.min(1000 * (long) Math.pow(2, attempts), MAX_RECONNECT_DELAY);
+                            final long delay = Math.min(1000 * (long) Math.pow(2, attempts), Constants.MAX_RECONNECT_DELAY);
                             LOGGER.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
                             try {
                                 client = Clients.newWsClient(Config.getWebSocketUri(), this);
@@ -121,7 +126,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             private void startHeartbeat() {
                 LOGGER.debug("Starting heartbeat");
                 stopHeartbeat();
-                ping = Flowable.interval(PING_INTERVAL, TimeUnit.MILLISECONDS).subscribe($ -> sendPing());
+                ping = Flowable.interval(Constants.PING_INTERVAL, TimeUnit.MILLISECONDS).subscribe($ -> sendPing());
             }
 
             private void stopHeartbeat() {
@@ -149,7 +154,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
             private void schedulePongTimeout() {
                 cancelPongTimeout();
-                pongTimeout = Flowable.timer(PONG_TIMEOUT, TimeUnit.MILLISECONDS).subscribe($ -> {
+                pongTimeout = Flowable.timer(Constants.PONG_TIMEOUT, TimeUnit.MILLISECONDS).subscribe($ -> {
                     if (awaitingPong.get()) {
                         LOGGER.warn("Pong not received within timeout. Reconnecting...");
                         reconnect("Pong timeout");
