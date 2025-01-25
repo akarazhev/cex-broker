@@ -5,7 +5,7 @@ import com.github.akarazhev.cexbroker.stream.Filter;
 import com.github.akarazhev.cexbroker.stream.Filters;
 import com.github.akarazhev.cexbroker.stream.Mapper;
 import com.github.akarazhev.cexbroker.stream.Mappers;
-import com.github.akarazhev.cexbroker.stream.Observables;
+import com.github.akarazhev.cexbroker.stream.DataFlows;
 import com.github.akarazhev.cexbroker.stream.StreamHandler;
 import com.github.akarazhev.cexbroker.stream.StreamProducer;
 import com.github.akarazhev.cexbroker.stream.Subscriber;
@@ -26,7 +26,7 @@ public final class Application {
         final Filter bybitFilter = Filters.ofBybit();
         final StreamHandler bybitHandler = new StreamProducer();
         final Subscriber bybitSubscriber = Subscribers.ofBybit(bybitHandler);
-        final Disposable bybitDisposable = Observables.ofBybit()
+        final Disposable bybitDisposable = DataFlows.ofBybit()
                 .map(bybitMapper.map())
                 .filter(bybitFilter.filter())
                 .subscribe(bybitSubscriber.onNext(), bybitSubscriber.onError(), bybitSubscriber.onComplete());
