@@ -43,6 +43,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
     @Override
     public void subscribe(@NonNull FlowableEmitter<String> emitter) throws Throwable {
+        LOGGER.info("Subscribing to BybitDataFlow");
         final EventListener listener = new EventListener() {
             private final AtomicBoolean awaitingPong = new AtomicBoolean(false);
             private Disposable ping;
@@ -50,28 +51,35 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
             @Override
             public void onOpen() {
+                LOGGER.info("WebSocket connection opened");
                 reconnectAttempts.set(0);
-                client.send(Requests.ofSubscription(Config.getTickerTopics()).toJson());
+                final String subscriptionRequest = Requests.ofSubscription(Config.getTickerTopics()).toJson();
+                LOGGER.debug("Sending subscription request: {}", subscriptionRequest);
+                client.send(subscriptionRequest);
                 startHeartbeat();
             }
 
             @Override
             public void onMessage(final String message) {
                 if (isPongMessage(message)) {
+                    LOGGER.debug("Received pong message");
                     handlePong();
                 } else {
+                    LOGGER.debug("Received message: {}", message);
                     emitter.onNext(message);
                 }
             }
 
             @Override
             public void onClose() {
+                LOGGER.warn("WebSocket connection closed");
                 stopHeartbeat();
                 reconnect("Connection closed");
             }
 
             @Override
             public void onError(final Throwable error) {
+                LOGGER.error("WebSocket error occurred", error);
                 stopHeartbeat();
                 reconnect("Error occurred: " + (error.getMessage() == null ? error : error.getMessage()));
             }
@@ -105,15 +113,19 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
                     } finally {
                         reconnectLock.unlock();
                     }
+                } else {
+                    LOGGER.warn("Reconnection already in progress, skipping this attempt");
                 }
             }
 
             private void startHeartbeat() {
+                LOGGER.debug("Starting heartbeat");
                 stopHeartbeat();
                 ping = Flowable.interval(PING_INTERVAL, TimeUnit.MILLISECONDS).subscribe($ -> sendPing());
             }
 
             private void stopHeartbeat() {
+                LOGGER.debug("Stopping heartbeat");
                 if (ping != null && !ping.isDisposed()) {
                     ping.dispose();
                 }
@@ -127,6 +139,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
                         LOGGER.warn("Previous ping didn't receive a pong. Reconnecting...");
                         reconnect("Ping timeout");
                     } else {
+                        LOGGER.debug("Sending ping");
                         client.send(Requests.ofPing().toJson());
                         awaitingPong.set(true);
                         schedulePongTimeout();
@@ -162,8 +175,12 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             }
         };
 
+        LOGGER.info("Initializing WebSocket client");
         client = Clients.newWsClient(Config.getWebSocketUri(), listener);
         client.connect();
-        emitter.setCancellable(client::close);
+        emitter.setCancellable(() -> {
+            LOGGER.info("Cancelling subscription and closing WebSocket client");
+            client.close();
+        });
     }
 }
