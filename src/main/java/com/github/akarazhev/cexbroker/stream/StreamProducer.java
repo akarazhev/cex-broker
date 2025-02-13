@@ -12,7 +12,7 @@ public final class StreamProducer implements StreamHandler {
     private final KafkaProducer<String, Map<String, Object>> producer;
 
     public StreamProducer() {
-        this.producer = new KafkaProducer<>(Config.getKafkaProperties());
+        this.producer = new KafkaProducer<>(Config.getProperties());
     }
 
     @Override

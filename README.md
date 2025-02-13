@@ -64,7 +64,7 @@ podman build -t cex-broker:0.1 .
 2. Run the container:
 
 ```bash
-podman run -e KAFKA_TOPIC=CEX_BROKER -e KAFKA_BOOTSTRAP_SERVERS=localhost:9092 -e WEB_SOCKET_TOPICS=tickers.BTCUSDT cex-broker:0.1
+podman run -e KAFKA_TOPIC=CEX_BROKER -e BOOTSTRAP_SERVERS=localhost:9092 -e WEB_SOCKET_TOPICS=tickers.BTCUSDT cex-broker:0.1
 ```
 
 ## Configuration
@@ -72,7 +72,7 @@ podman run -e KAFKA_TOPIC=CEX_BROKER -e KAFKA_BOOTSTRAP_SERVERS=localhost:9092 -
 The application can be configured using the following environment variables:
 
 - `KAFKA_TOPIC`: The Kafka topic to which data will be published (default: "CEX_BROKER")
-- `KAFKA_BOOTSTRAP_SERVERS`: The Kafka bootstrap servers (default: "localhost:9092")
+- `BOOTSTRAP_SERVERS`: The Kafka bootstrap servers (default: "localhost:9092")
 - `WEB_SOCKET_TOPICS`: Comma-separated list of WebSocket topics to subscribe to (default: "tickers.BTCUSDT")
 
 ## Contributing
