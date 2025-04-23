@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -26,10 +27,10 @@ import static com.github.akarazhev.cexbroker.bybit.BybitConfig.getPingInterval;
 import static com.github.akarazhev.cexbroker.bybit.BybitConfig.getPongTimeout;
 
 public final class BybitDataFlow implements FlowableOnSubscribe<String> {
-    private final static Logger LOGGER = LoggerFactory.getLogger(BybitDataFlow.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BybitDataFlow.class);
     private final Lock reconnectLock = new ReentrantLock();
     private final AtomicInteger reconnectAttempts = new AtomicInteger(0);
-    private WebSocketClient client;
+    private final AtomicReference<WebSocketClient> client = new AtomicReference<>(null);
 
     private BybitDataFlow() {
     }
@@ -51,8 +52,13 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
                 LOGGER.info("WebSocket connection opened");
                 reconnectAttempts.set(0);
                 final String subscriptionRequest = Request.ofSubscription(BybitConfig.getTickerTopics());
-                LOGGER.debug("Sending subscription request: {}", subscriptionRequest);
-                client.send(subscriptionRequest);
+                // Avoid logging sensitive data
+                LOGGER.debug("Sending subscription request (length={}): [REDACTED]", subscriptionRequest.length());
+                WebSocketClient ws = client.get();
+                if (ws != null && ws.isOpen()) {
+                    ws.send(subscriptionRequest);
+                }
+
                 startHeartbeat();
             }
 
@@ -84,24 +90,41 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             private void reconnect(String reason) {
                 if (reconnectLock.tryLock()) {
                     try {
+                        stopHeartbeat();
+                        WebSocketClient oldClient = client.getAndSet(null);
+                        if (oldClient != null && oldClient.isOpen()) {
+                            try {
+                                oldClient.close();
+                            } catch (Exception e) {
+                                LOGGER.warn("Error closing old WebSocketClient: {}", e.getMessage());
+                            }
+                        }
+
                         while (reconnectAttempts.get() < getMaxReconnectAttempts()) {
                             final int attempts = reconnectAttempts.getAndIncrement();
-                            final long delay = Math.min(1000 * (long) Math.pow(2, attempts), getMaxReconnectDelay());
+                            final long delay = Math.min(1000L * (1L << attempts), getMaxReconnectDelay());
                             LOGGER.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
                             try {
-                                client = Clients.ofWebSocket(BybitConfig.getWebSocketUri(), this);
-                                if (client.connectBlocking()) {
+                                WebSocketClient newClient = Clients.ofWebSocket(BybitConfig.getWebSocketUri(), this);
+                                client.set(newClient);
+                                if (newClient.connectBlocking()) {
                                     LOGGER.warn("Reconnected after {} ms", delay);
-                                    emitter.setCancellable(client::close);
+                                    emitter.setCancellable(() -> {
+                                        LOGGER.info("Cancelling subscription and closing WebSocket client");
+                                        WebSocketClient c = client.getAndSet(null);
+                                        if (c != null && c.isOpen()) c.close();
+                                    });
                                     return; // Successfully reconnected, exit the method
                                 } else {
                                     reason = "Failed to reconnect";
-                                    Thread.sleep(Duration.ofMillis(delay));
+                                    Thread.sleep(Duration.ofMillis(delay).toMillis());
                                 }
                             } catch (InterruptedException e) {
                                 LOGGER.error("Error reconnecting to the server: {}", e.getMessage());
                                 Thread.currentThread().interrupt(); // Restore the interrupt status
                                 return; // Exit the reconnection loop if interrupted
+                            } catch (Exception e) {
+                                LOGGER.error("Unexpected error during reconnect: {}", e.getMessage());
                             }
                         }
                         // If we've exhausted all attempts
@@ -118,7 +141,8 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             private void startHeartbeat() {
                 LOGGER.debug("Starting heartbeat");
                 stopHeartbeat();
-                ping = Flowable.interval(getPingInterval(), TimeUnit.MILLISECONDS).subscribe($ -> sendPing());
+                ping = Flowable.interval(getPingInterval(), TimeUnit.MILLISECONDS)
+                        .subscribe($ -> sendPing(), err -> LOGGER.error("Heartbeat error", err));
             }
 
             private void stopHeartbeat() {
@@ -131,13 +155,14 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             }
 
             private void sendPing() {
-                if (client != null && client.isOpen()) {
+                WebSocketClient ws = client.get();
+                if (ws != null && ws.isOpen()) {
                     if (awaitingPong.get()) {
                         LOGGER.warn("Previous ping didn't receive a pong. Reconnecting...");
                         reconnect("Ping timeout");
                     } else {
                         LOGGER.debug("Sending ping");
-                        client.send(Request.ofPing());
+                        ws.send(Request.ofPing());
                         awaitingPong.set(true);
                         schedulePongTimeout();
                     }
@@ -146,12 +171,13 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
             private void schedulePongTimeout() {
                 cancelPongTimeout();
-                pongTimeout = Flowable.timer(getPongTimeout(), TimeUnit.MILLISECONDS).subscribe($ -> {
-                    if (awaitingPong.get()) {
-                        LOGGER.warn("Pong not received within timeout. Reconnecting...");
-                        reconnect("Pong timeout");
-                    }
-                });
+                pongTimeout = Flowable.timer(getPongTimeout(), TimeUnit.MILLISECONDS)
+                        .subscribe($ -> {
+                            if (awaitingPong.get()) {
+                                LOGGER.warn("Pong not received within timeout. Reconnecting...");
+                                reconnect("Pong timeout");
+                            }
+                        }, err -> LOGGER.error("Pong timeout error", err));
             }
 
             private void cancelPongTimeout() {
@@ -166,18 +192,24 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             }
 
             private boolean isPongMessage(final String message) {
-                // Implement logic to check if the message is a pong response
-                // This depends on the specific format of Bybit's pong messages
-                return message.contains("pong") || message.contains("\"ret_msg\":\"pong\"");
+                // Example: stricter JSON-based pong detection
+                return message.trim().equalsIgnoreCase("{\"op\":\"pong\"}")
+                        || message.contains("\"ret_msg\":\"pong\"");
             }
         };
 
         LOGGER.info("Initializing WebSocket client");
-        client = Clients.ofWebSocket(BybitConfig.getWebSocketUri(), listener);
-        client.connect();
+        WebSocketClient wsClient = Clients.ofWebSocket(BybitConfig.getWebSocketUri(), listener);
+        client.set(wsClient);
+        wsClient.connect();
+
         emitter.setCancellable(() -> {
             LOGGER.info("Cancelling subscription and closing WebSocket client");
-            client.close();
+            WebSocketClient c = client.getAndSet(null);
+            if (c != null && c.isOpen()) {
+                c.close();
+            }
+            // Heartbeat cleanup is handled by listener.onClose()
         });
     }
 }
