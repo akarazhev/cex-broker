@@ -30,6 +30,10 @@ public final class AppConfig {
         return Boolean.parseBoolean(get(key));
     }
 
+    public static int getAsInt(final String key) {
+        return Integer.parseInt(get(key));
+    }
+
     public static long getAsLong(final String key) {
         return Long.parseLong(get(key));
     }
