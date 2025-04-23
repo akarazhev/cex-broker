@@ -11,8 +11,8 @@ public final class BybitFilter implements Filter {
     private BybitFilter() {
     }
 
-    public static BybitFilter create() {
-        return new BybitFilter();
+    public static Predicate<Map<String, Object>> ofFilter() {
+        return new BybitFilter().filter();
     }
 
     @Override

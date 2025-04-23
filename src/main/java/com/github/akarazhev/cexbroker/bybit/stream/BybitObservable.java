@@ -74,7 +74,7 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
                             final long delay = Math.min(1000 * (long) Math.pow(2, attempts), MAX_RECONNECT_DELAY);
                             LOGGER.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
                             try {
-                                 client = Clients.newWsClient(BybitConfig.getWebSocketUri(), this);
+                                 client = Clients.ofWebSocket(BybitConfig.getWebSocketUri(), this);
                                 if (client.connectBlocking()) {
                                     LOGGER.warn("Reconnected after {} ms", delay);
                                     emitter.setCancellable(client::close);
@@ -117,7 +117,7 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
             }
         };
 
-        client = Clients.newWsClient(BybitConfig.getWebSocketUri(), listener);
+        client = Clients.ofWebSocket(BybitConfig.getWebSocketUri(), listener);
         client.connect();
         emitter.setCancellable(client::close);
     }

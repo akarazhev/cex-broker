@@ -1,14 +1,13 @@
 package com.github.akarazhev.cexbroker;
 
-import com.github.akarazhev.cexbroker.stream.Config;
-import com.github.akarazhev.cexbroker.stream.Filter;
-import com.github.akarazhev.cexbroker.stream.Filters;
-import com.github.akarazhev.cexbroker.stream.Mapper;
-import com.github.akarazhev.cexbroker.stream.Mappers;
+import com.github.akarazhev.cexbroker.bybit.BybitConfig;
+import com.github.akarazhev.cexbroker.bybit.stream.BybitFilter;
+import com.github.akarazhev.cexbroker.bybit.stream.BybitMapper;
+import com.github.akarazhev.cexbroker.bybit.stream.BybitSubscriber;
+import com.github.akarazhev.cexbroker.kafka.KafkaConfig;
 import com.github.akarazhev.cexbroker.stream.Observables;
 import com.github.akarazhev.cexbroker.stream.StreamHandler;
 import com.github.akarazhev.cexbroker.stream.Subscriber;
-import com.github.akarazhev.cexbroker.stream.Subscribers;
 import io.reactivex.rxjava3.disposables.Disposable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +20,8 @@ public class Application {
     public static void main(final String[] args) {
         final long t = System.currentTimeMillis();
         LOGGER.info("Starting CEX Broker...");
-        LOGGER.info(com.github.akarazhev.cexbroker.bybit.config.Config.print());
-        LOGGER.info(Config.print());
+        LOGGER.info(BybitConfig.print());
+        LOGGER.info(KafkaConfig.print());
 //        final StreamHandler streamHandler = new StreamProducer();
         final StreamHandler consoleHandler = new StreamHandler() {
             @Override
@@ -35,12 +34,10 @@ public class Application {
                 LOGGER.info("Closing producer...");
             }
         };
-        final Mapper bybitMapper = Mappers.ofBybit();
-        final Filter bybitFilter = Filters.ofBybit();
-        final Subscriber bybitSubscriber = Subscribers.ofBybit(consoleHandler);
+        final Subscriber bybitSubscriber = BybitSubscriber.create(consoleHandler);
         final Disposable bybitDisposable = Observables.ofBybit()
-                .map(bybitMapper.map())
-                .filter(bybitFilter.filter())
+                .map(BybitMapper.ofMap())
+                .filter(BybitFilter.ofFilter())
                 .subscribe(bybitSubscriber.onNext(), bybitSubscriber.onError(), bybitSubscriber.onComplete());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("Shutting down CEX Broker...");

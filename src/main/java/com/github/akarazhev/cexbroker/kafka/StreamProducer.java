@@ -1,5 +1,6 @@
-package com.github.akarazhev.cexbroker.stream;
+package com.github.akarazhev.cexbroker.kafka;
 
+import com.github.akarazhev.cexbroker.stream.StreamHandler;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
@@ -9,7 +10,7 @@ public final class StreamProducer implements StreamHandler {
     private final KafkaProducer<String, Map<String, Object>> producer;
 
     public StreamProducer() {
-        this.producer = new KafkaProducer<>(Config.getKafkaProperties());
+        this.producer = new KafkaProducer<>(KafkaConfig.getKafkaProperties());
     }
 
     @Override

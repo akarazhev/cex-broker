@@ -1,8 +1,8 @@
-package com.github.akarazhev.cexbroker.stream;
+package com.github.akarazhev.cexbroker.kafka;
 
 import java.util.Properties;
 
-public final class Config {
+public final class KafkaConfig {
     private final static Properties KAFKA_PROPERTIES;
 
     static {
@@ -13,7 +13,7 @@ public final class Config {
         KAFKA_PROPERTIES.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     }
 
-    private Config() {
+    private KafkaConfig() {
         throw new UnsupportedOperationException();
     }
 
