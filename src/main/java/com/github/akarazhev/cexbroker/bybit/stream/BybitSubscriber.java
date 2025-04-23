@@ -12,6 +12,7 @@ import java.util.Map;
 
 public final class BybitSubscriber implements Subscriber {
     private static final Logger LOGGER = LoggerFactory.getLogger(BybitSubscriber.class);
+    private static final String STREAM_TOPIC_PREFIX = "bybit";
     private final StreamHandler handler;
 
     private BybitSubscriber(final StreamHandler handler) {
@@ -25,8 +26,7 @@ public final class BybitSubscriber implements Subscriber {
     @Override
     public Consumer<Map<String, Object>> onNext() {
         return data -> {
-            final String topic = String.join(".", BybitConstants.Topic.STREAM_TOPIC_PREFIX,
-                    data.get(BybitConstants.Topic.TOPIC_FIELD).toString());
+            final String topic = String.join(".", STREAM_TOPIC_PREFIX, data.get(BybitConstants.TOPIC_FIELD).toString());
             handler.handle(topic, data);
         };
     }
