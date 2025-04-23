@@ -20,10 +20,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class BybitObservable implements ObservableOnSubscribe<String> {
-    private final static Logger LOGGER = LoggerFactory.getLogger(BybitObservable.class);
-    private final static int MAX_RECONNECT_ATTEMPTS = 10; // Increased for more persistence
-    private final static long MAX_RECONNECT_DELAY = 30000; // Max delay of 30 seconds
-    private final static long PING_INTERVAL = 20000; // 20 seconds
+    private static final Logger LOGGER = LoggerFactory.getLogger(BybitObservable.class);
+    private static final int MAX_RECONNECT_ATTEMPTS = 10; // Increased for more persistence
+    private static final long MAX_RECONNECT_DELAY = 30000; // Max delay of 30 seconds
+    private static final long PING_INTERVAL = 20000; // 20 seconds
 
     private final Lock reconnectLock = new ReentrantLock();
     private final AtomicInteger reconnectAttempts = new AtomicInteger(0);
@@ -74,7 +74,7 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
                             final long delay = Math.min(1000 * (long) Math.pow(2, attempts), MAX_RECONNECT_DELAY);
                             LOGGER.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
                             try {
-                                 client = Clients.ofWebSocket(BybitConfig.getWebSocketUri(), this);
+                                client = Clients.ofWebSocket(BybitConfig.getWebSocketUri(), this);
                                 if (client.connectBlocking()) {
                                     LOGGER.warn("Reconnected after {} ms", delay);
                                     emitter.setCancellable(client::close);

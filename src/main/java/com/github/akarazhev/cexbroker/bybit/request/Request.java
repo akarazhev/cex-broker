@@ -3,8 +3,8 @@ package com.github.akarazhev.cexbroker.bybit.request;
 import com.github.akarazhev.cexbroker.util.JsonUtils;
 
 public final class Request {
-    private final static String SUBSCRIBE = "subscribe";
-    private final static String PING = "ping";
+    private static final String SUBSCRIBE = "subscribe";
+    private static final String PING = "ping";
 
     private Request() {
         throw new UnsupportedOperationException();

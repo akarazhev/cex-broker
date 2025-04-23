@@ -3,7 +3,7 @@ package com.github.akarazhev.cexbroker.kafka;
 import java.util.Properties;
 
 public final class KafkaConfig {
-    private final static Properties KAFKA_PROPERTIES;
+    private static final Properties KAFKA_PROPERTIES;
 
     static {
         KAFKA_PROPERTIES = new Properties();

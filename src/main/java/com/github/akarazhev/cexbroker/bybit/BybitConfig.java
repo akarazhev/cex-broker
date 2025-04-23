@@ -6,8 +6,8 @@ import java.net.URI;
 import java.util.Arrays;
 
 public final class BybitConfig {
-    private final static URI WEB_SOCKET_URI = URI.create(AppConfig.getAsString("bybit.public.testnet.spot"));
-    private final static String[] TICKER_TOPICS = AppConfig.getAsString("bybit.public.ticker.topics").split(",");
+    private static final URI WEB_SOCKET_URI = URI.create(AppConfig.getAsString("bybit.public.testnet.spot"));
+    private static final String[] TICKER_TOPICS = AppConfig.getAsString("bybit.public.ticker.topics").split(",");
 
     private BybitConfig() {
         throw new UnsupportedOperationException();
