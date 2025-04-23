@@ -5,5 +5,5 @@ public final class BybitConstants {
         throw new UnsupportedOperationException();
     }
 
-    public final static String TOPIC_FIELD = "topic";
+    public static final String TOPIC_FIELD = "topic";
 }
