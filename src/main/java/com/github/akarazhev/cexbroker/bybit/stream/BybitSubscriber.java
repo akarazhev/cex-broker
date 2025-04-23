@@ -1,6 +1,6 @@
 package com.github.akarazhev.cexbroker.bybit.stream;
 
-import com.github.akarazhev.cexbroker.bybit.Constants;
+import com.github.akarazhev.cexbroker.bybit.BybitConstants;
 import com.github.akarazhev.cexbroker.stream.Subscriber;
 import com.github.akarazhev.cexbroker.stream.StreamHandler;
 import io.reactivex.rxjava3.functions.Action;
@@ -25,8 +25,8 @@ public final class BybitSubscriber implements Subscriber {
     @Override
     public Consumer<Map<String, Object>> onNext() {
         return data -> {
-            final String topic = String.join(".", Constants.Topics.STREAM_TOPIC_PREFIX,
-                    data.get(Constants.Topics.TOPIC_FIELD).toString());
+            final String topic = String.join(".", BybitConstants.Topic.STREAM_TOPIC_PREFIX,
+                    data.get(BybitConstants.Topic.TOPIC_FIELD).toString());
             handler.handle(topic, data);
         };
     }

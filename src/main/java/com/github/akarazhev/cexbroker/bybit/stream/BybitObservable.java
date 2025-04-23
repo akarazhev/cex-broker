@@ -1,7 +1,7 @@
 package com.github.akarazhev.cexbroker.bybit.stream;
 
-import com.github.akarazhev.cexbroker.bybit.config.Config;
-import com.github.akarazhev.cexbroker.bybit.request.Requests;
+import com.github.akarazhev.cexbroker.bybit.BybitConfig;
+import com.github.akarazhev.cexbroker.bybit.request.Request;
 import com.github.akarazhev.cexbroker.net.Clients;
 import com.github.akarazhev.cexbroker.net.EventListener;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -45,7 +45,7 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
             @Override
             public void onOpen() {
                 reconnectAttempts.set(0); // Reset reconnect attempts on successful connection
-                client.send(Requests.ofSubscription(Config.getTickerTopics()).toJson());
+                client.send(Request.ofSubscription(BybitConfig.getTickerTopics()));
                 startPing();
             }
 
@@ -74,7 +74,7 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
                             final long delay = Math.min(1000 * (long) Math.pow(2, attempts), MAX_RECONNECT_DELAY);
                             LOGGER.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
                             try {
-                                 client = Clients.newWsClient(Config.getWebSocketUri(), this);
+                                 client = Clients.newWsClient(BybitConfig.getWebSocketUri(), this);
                                 if (client.connectBlocking()) {
                                     LOGGER.warn("Reconnected after {} ms", delay);
                                     emitter.setCancellable(client::close);
@@ -112,12 +112,12 @@ public final class BybitObservable implements ObservableOnSubscribe<String> {
 
             private void sendPing() {
                 if (client != null && client.isOpen()) {
-                    client.send(Requests.ofPing().toJson());
+                    client.send(Request.ofPing());
                 }
             }
         };
 
-        client = Clients.newWsClient(Config.getWebSocketUri(), listener);
+        client = Clients.newWsClient(BybitConfig.getWebSocketUri(), listener);
         client.connect();
         emitter.setCancellable(client::close);
     }

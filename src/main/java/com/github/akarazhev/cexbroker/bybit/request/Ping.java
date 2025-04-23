@@ -1,8 +1,6 @@
 package com.github.akarazhev.cexbroker.bybit.request;
 
-public record Ping(String op) {
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    public String toJson() {
-        return "{\"op\":\"" + op + "\"}";
-    }
+public record Ping(@JsonProperty String op) {
 }
