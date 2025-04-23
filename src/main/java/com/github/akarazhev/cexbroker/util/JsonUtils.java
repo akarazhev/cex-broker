@@ -5,14 +5,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
 
 public final class JsonUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtils.class);
     private static final ObjectMapper MAPPER;
     private static final ObjectReader READER;
     private static final ObjectWriter WRITER;
@@ -29,7 +26,19 @@ public final class JsonUtils {
         throw new UnsupportedOperationException();
     }
 
-    public static Map<String, Object> jsonToMap(final String json) throws IOException {
-        return READER.forType(Map.class).readValue(json);
+    public static String objectToJson(final Object object) {
+        try {
+            return WRITER.writeValueAsString(object);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Map<String, Object> jsonToMap(final String json) {
+        try {
+            return READER.forType(Map.class).readValue(json);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
