@@ -26,11 +26,27 @@ public final class JsonUtils {
         throw new UnsupportedOperationException();
     }
 
-    public static Map<String, Object> jsonToMap(final String json) throws IOException {
-        return READER.forType(Map.class).readValue(json);
+    public static String objectToJson(final Object object) {
+        try {
+            return WRITER.writeValueAsString(object);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static <T> byte[] objectToBytes(final T object) throws IOException {
-        return WRITER.writeValueAsBytes(object);
+    public static Map<String, Object> jsonToMap(final String json) {
+        try {
+            return READER.forType(Map.class).readValue(json);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> byte[] objectToBytes(final T object) {
+        try {
+            return WRITER.writeValueAsBytes(object);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

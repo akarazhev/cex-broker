@@ -1,6 +1,6 @@
 package com.github.akarazhev.cexbroker.bybit.stream;
 
-import com.github.akarazhev.cexbroker.bybit.Constants;
+import com.github.akarazhev.cexbroker.bybit.BybitConstants;
 import com.github.akarazhev.cexbroker.stream.Filter;
 import io.reactivex.rxjava3.functions.Predicate;
 
@@ -11,12 +11,12 @@ public final class BybitFilter implements Filter {
     private BybitFilter() {
     }
 
-    public static BybitFilter create() {
-        return new BybitFilter();
+    public static Predicate<Map<String, Object>> ofFilter() {
+        return new BybitFilter().filter();
     }
 
     @Override
     public Predicate<Map<String, Object>> filter() {
-        return o -> o.containsKey(Constants.Topics.TOPIC_FIELD);
+        return o -> o.containsKey(BybitConstants.TOPIC_FIELD);
     }
 }

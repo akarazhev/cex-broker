@@ -1,7 +1,7 @@
 package com.github.akarazhev.cexbroker.bybit.stream;
 
-import com.github.akarazhev.cexbroker.bybit.config.Config;
-import com.github.akarazhev.cexbroker.bybit.request.Requests;
+import com.github.akarazhev.cexbroker.bybit.BybitConfig;
+import com.github.akarazhev.cexbroker.bybit.request.Request;
 import com.github.akarazhev.cexbroker.net.Clients;
 import com.github.akarazhev.cexbroker.net.EventListener;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -58,7 +58,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             public void onOpen() {
                 LOGGER.info("WebSocket connection opened");
                 reconnectAttempts.set(0);
-                final String subscriptionRequest = Requests.ofSubscription(Config.getTickerTopics()).toJson();
+                final String subscriptionRequest = Request.ofSubscription(BybitConfig.getTickerTopics());
                 LOGGER.debug("Sending subscription request: {}", subscriptionRequest);
                 client.send(subscriptionRequest);
                 startHeartbeat();
@@ -97,7 +97,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
                             final long delay = Math.min(1000 * (long) Math.pow(2, attempts), Constants.MAX_RECONNECT_DELAY);
                             LOGGER.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
                             try {
-                                client = Clients.newWsClient(Config.getWebSocketUri(), this);
+                                client = Clients.ofWebSocket(BybitConfig.getWebSocketUri(), this);
                                 if (client.connectBlocking()) {
                                     LOGGER.warn("Reconnected after {} ms", delay);
                                     emitter.setCancellable(client::close);
@@ -145,7 +145,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
                         reconnect("Ping timeout");
                     } else {
                         LOGGER.debug("Sending ping");
-                        client.send(Requests.ofPing().toJson());
+                        client.send(Request.ofPing());
                         awaitingPong.set(true);
                         schedulePongTimeout();
                     }
@@ -181,7 +181,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
         };
 
         LOGGER.info("Initializing WebSocket client");
-        client = Clients.newWsClient(Config.getWebSocketUri(), listener);
+        client = Clients.ofWebSocket(BybitConfig.getWebSocketUri(), listener);
         client.connect();
         emitter.setCancellable(() -> {
             LOGGER.info("Cancelling subscription and closing WebSocket client");

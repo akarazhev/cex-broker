@@ -1,4 +1,4 @@
-package com.github.akarazhev.cexbroker.stream;
+package com.github.akarazhev.cexbroker;
 
 import com.github.akarazhev.cexbroker.bybit.stream.BybitDataFlow;
 import io.reactivex.rxjava3.core.BackpressureStrategy;

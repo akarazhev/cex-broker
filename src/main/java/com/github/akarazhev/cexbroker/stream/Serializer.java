@@ -13,10 +13,6 @@ public final class Serializer<T> implements org.apache.kafka.common.serializatio
             return null;
         }
 
-        try {
-            return JsonUtils.objectToBytes(data);
-        } catch (IOException e) {
-            throw new KafkaException("Failed to serialize data", e);
-        }
+        return JsonUtils.objectToBytes(data);
     }
 }

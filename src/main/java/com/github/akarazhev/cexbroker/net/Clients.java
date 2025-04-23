@@ -11,7 +11,7 @@ public final class Clients {
         throw new UnsupportedOperationException();
     }
 
-    public static WebSocketClient newWsClient(final URI uri, final EventListener listener) {
+    public static WebSocketClient ofWebSocket(final URI uri, final EventListener listener) {
         return new WebSocketClient(uri) {
             @Override
             public void onOpen(ServerHandshake handshakedata) {

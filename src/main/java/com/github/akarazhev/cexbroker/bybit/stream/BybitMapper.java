@@ -11,8 +11,8 @@ public final class BybitMapper implements Mapper {
     private BybitMapper() {
     }
 
-    public static BybitMapper create() {
-        return new BybitMapper();
+    public static Function<String, Map<String, Object>> ofMap() {
+        return new BybitMapper().map();
     }
 
     @Override
