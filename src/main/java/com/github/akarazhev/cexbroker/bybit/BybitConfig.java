@@ -11,6 +11,7 @@ public final class BybitConfig {
     private static final int MAX_RECONNECT_ATTEMPTS = AppConfig.getAsInt("bybit.max.reconnect.attempts");
     private static final long MAX_RECONNECT_DELAY = AppConfig.getAsLong("bybit.max.reconnect.delay");
     private static final long PING_INTERVAL = AppConfig.getAsLong("bybit.ping.interval");
+    private static final long PONG_TIMEOUT = AppConfig.getAsLong("bybit.pong.timeout");
 
     private BybitConfig() {
         throw new UnsupportedOperationException();
@@ -34,6 +35,10 @@ public final class BybitConfig {
 
     public static long getPingInterval() {
         return PING_INTERVAL;
+    }
+
+    public static long getPongTimeout() {
+        return PONG_TIMEOUT;
     }
 
     public static String print() {
