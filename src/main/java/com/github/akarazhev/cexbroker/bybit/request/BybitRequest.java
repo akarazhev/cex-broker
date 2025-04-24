@@ -2,11 +2,11 @@ package com.github.akarazhev.cexbroker.bybit.request;
 
 import com.github.akarazhev.cexbroker.util.JsonUtils;
 
-public final class Request {
+public final class BybitRequest {
     private static final String SUBSCRIBE = "subscribe";
     private static final String PING = "ping";
 
-    private Request() {
+    private BybitRequest() {
         throw new UnsupportedOperationException();
     }
 

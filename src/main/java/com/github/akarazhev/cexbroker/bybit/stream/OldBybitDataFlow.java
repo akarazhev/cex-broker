@@ -1,7 +1,7 @@
 package com.github.akarazhev.cexbroker.bybit.stream;
 
 import com.github.akarazhev.cexbroker.bybit.BybitConfig;
-import com.github.akarazhev.cexbroker.bybit.request.Request;
+import com.github.akarazhev.cexbroker.bybit.request.BybitRequest;
 import com.github.akarazhev.cexbroker.net.Clients;
 import com.github.akarazhev.cexbroker.net.EventListener;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -26,17 +26,17 @@ import static com.github.akarazhev.cexbroker.bybit.BybitConfig.getMaxReconnectDe
 import static com.github.akarazhev.cexbroker.bybit.BybitConfig.getPingInterval;
 import static com.github.akarazhev.cexbroker.bybit.BybitConfig.getPongTimeout;
 
-public final class BybitDataFlow implements FlowableOnSubscribe<String> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BybitDataFlow.class);
+public final class OldBybitDataFlow implements FlowableOnSubscribe<String> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OldBybitDataFlow.class);
     private final Lock reconnectLock = new ReentrantLock();
     private final AtomicInteger reconnectAttempts = new AtomicInteger(0);
     private final AtomicReference<WebSocketClient> client = new AtomicReference<>(null);
 
-    private BybitDataFlow() {
+    private OldBybitDataFlow() {
     }
 
-    public static BybitDataFlow create() {
-        return new BybitDataFlow();
+    public static OldBybitDataFlow create() {
+        return new OldBybitDataFlow();
     }
 
     @Override
@@ -51,7 +51,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             public void onOpen() {
                 LOGGER.info("WebSocket connection opened");
                 reconnectAttempts.set(0);
-                final String subscriptionRequest = Request.ofSubscription(BybitConfig.getTickerTopics());
+                final String subscriptionRequest = BybitRequest.ofSubscription(BybitConfig.getTickerTopics());
                 // Avoid logging sensitive data
                 LOGGER.debug("Sending subscription request (length={}): [REDACTED]", subscriptionRequest.length());
                 WebSocketClient ws = client.get();
@@ -162,7 +162,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
                         reconnect("Ping timeout");
                     } else {
                         LOGGER.debug("Sending ping");
-                        ws.send(Request.ofPing());
+                        ws.send(BybitRequest.ofPing());
                         awaitingPong.set(true);
                         schedulePongTimeout();
                     }
