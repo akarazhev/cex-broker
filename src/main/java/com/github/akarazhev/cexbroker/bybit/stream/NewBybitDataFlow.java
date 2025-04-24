@@ -9,33 +9,27 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public final class NewBybitDataFlow implements FlowableOnSubscribe<String> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NewBybitDataFlow.class);
-
-    private static final String WS_URL = "wss://stream-testnet.bybit.com/v5/public/spot"; // Replace with your endpoint
+    private static final String WS_URL = "wss://stream-testnet.bybit.com/v5/public/spot";
     private static final int HEARTBEAT_INTERVAL_SEC = 20;
     private static final int PONG_TIMEOUT_SEC = 10;
     private static final int MAX_RECONNECT_ATTEMPTS = 5;
     private static final long MAX_RECONNECT_DELAY_MS = 30000L;
 
-    private final OkHttpClient httpClient = new OkHttpClient.Builder().build();
+    private final OkHttpClient httpClient = new OkHttpClient();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private final AtomicReference<WebSocket> webSocketRef = new AtomicReference<>(null);
-    private final Lock reconnectLock = new ReentrantLock();
-    private final AtomicInteger reconnectAttempts = new AtomicInteger(0);
 
+    private WebSocket webSocket;
     private ScheduledFuture<?> heartbeatTask;
     private ScheduledFuture<?> pongTimeoutTask;
+    private boolean awaitingPong = false;
+    private int reconnectAttempts = 0;
 
     private NewBybitDataFlow() {
     }
@@ -50,182 +44,108 @@ public final class NewBybitDataFlow implements FlowableOnSubscribe<String> {
     }
 
     private void connect(FlowableEmitter<String> emitter) {
-        reconnectAttempts.set(0);
+        reconnectAttempts = 0;
         doConnect(emitter);
-    }
-
-    private void doConnect(FlowableEmitter<String> emitter) {
-        Request request = new Request.Builder().url(WS_URL).build();
-        WebSocketListener listener = new OkHttpWebSocketListener(emitter);
-        WebSocket ws = httpClient.newWebSocket(request, listener);
-        webSocketRef.set(ws);
-
         emitter.setCancellable(() -> {
-            WebSocket socket = webSocketRef.getAndSet(null);
-            if (socket != null) {
-                socket.close(1000, "Client closed");
-            }
-
+            closeWebSocket();
             stopHeartbeat();
             scheduler.shutdownNow();
         });
     }
 
-    private class OkHttpWebSocketListener extends WebSocketListener {
-        private final FlowableEmitter<String> emitter;
-        private final AtomicBoolean awaitingPong = new AtomicBoolean(false);
-
-        OkHttpWebSocketListener(FlowableEmitter<String> emitter) {
-            this.emitter = emitter;
-        }
-
-        @Override
-        public void onOpen(WebSocket webSocket, @NotNull Response response) {
-            LOGGER.info("WebSocket connection opened");
-            reconnectAttempts.set(0);
-
-            // Example: subscribe to ETHUSDT ticker (adjust as needed)
-            String subscribeMsg = "{\"op\":\"subscribe\",\"args\":[\"tickers.ETHUSDT\"]}";
-            LOGGER.debug("Sending subscription: {}", subscribeMsg);
-            webSocket.send(subscribeMsg);
-
-            startHeartbeat(webSocket);
-        }
-
-        @Override
-        public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
-            LOGGER.debug("Received message: {}", text);
-            if (isSubscriptionConfirmation(text)) {
-                startHeartbeat(webSocket);
+    private void doConnect(FlowableEmitter<String> emitter) {
+        webSocket = httpClient.newWebSocket(new Request.Builder().url(WS_URL).build(), new WebSocketListener() {
+            @Override
+            public void onOpen(@NotNull WebSocket ws, @NotNull Response response) {
+                reconnectAttempts = 0;
+                ws.send("{\"op\":\"subscribe\",\"args\":[\"tickers.ETHUSDT\"]}");
+                startHeartbeat(ws, emitter);
             }
 
-            if (isPongMessage(text)) {
-                LOGGER.debug("Received pong message");
-                handlePong();
+            @Override
+            public void onMessage(@NotNull WebSocket ws, @NotNull String text) {
+                if (isSubscriptionConfirmation(text)) startHeartbeat(ws, emitter);
+                if (isPongMessage(text)) handlePong();
+                else emitter.onNext(text);
+            }
+
+            @Override
+            public void onMessage(@NotNull WebSocket ws, @NotNull ByteString bytes) {
+                onMessage(ws, bytes.utf8());
+            }
+
+            @Override
+            public void onClosing(@NotNull WebSocket ws, int code, @NotNull String reason) {
+                emitter.onComplete();
+                stopHeartbeat();
+            }
+
+            @Override
+            public void onClosed(@NotNull WebSocket ws, int code, @NotNull String reason) {
+                stopHeartbeat();
+                reconnect(emitter);
+            }
+
+            @Override
+            public void onFailure(@NotNull WebSocket ws, @NotNull Throwable t, Response response) {
+                stopHeartbeat();
+                reconnect(emitter);
+            }
+        });
+    }
+
+    private void startHeartbeat(WebSocket ws, FlowableEmitter<String> emitter) {
+        stopHeartbeat();
+        heartbeatTask = scheduler.scheduleAtFixedRate(() -> {
+            if (awaitingPong) {
+                reconnect(emitter);
             } else {
-                emitter.onNext(text);
+                awaitingPong = true;
+                ws.send("{\"op\":\"ping\"}");
+                pongTimeoutTask = scheduler.schedule(() -> {
+                    if (awaitingPong) reconnect(emitter);
+                }, PONG_TIMEOUT_SEC, TimeUnit.SECONDS);
             }
-        }
-
-        private boolean isSubscriptionConfirmation(String message) {
-            // Bybit sends {"op":"subscribe","req_id":"...","success":true,...}
-            return message.contains("\"op\":\"subscribe\"") && message.contains("\"success\":true");
-        }
-
-        @Override
-        public void onMessage(@NotNull WebSocket webSocket, ByteString bytes) {
-            LOGGER.warn("Received unexpected binary message, converting to UTF-8");
-            onMessage(webSocket, bytes.utf8());
-        }
-
-        @Override
-        public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
-            LOGGER.warn("WebSocket is closing: {} - {}", code, reason);
-            emitter.onComplete();
-            stopHeartbeat();
-        }
-
-        @Override
-        public void onClosed(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
-            LOGGER.warn("WebSocket closed: {} - {}", code, reason);
-            stopHeartbeat();
-            reconnect("Closed: " + reason, emitter);
-        }
-
-        @Override
-        public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
-            LOGGER.error("WebSocket failure", t);
-            stopHeartbeat();
-            reconnect("Failure: " + t.getMessage(), emitter);
-        }
-
-        private void startHeartbeat(WebSocket webSocket) {
-            stopHeartbeat();
-            heartbeatTask = scheduler.scheduleAtFixedRate(() -> {
-                if (awaitingPong.get()) {
-                    LOGGER.warn("Pong not received, reconnecting...");
-                    reconnect("Pong timeout", emitter);
-                } else {
-                    awaitingPong.set(true);
-                    String pingMsg = "{\"op\":\"ping\"}";
-                    LOGGER.debug("Sending ping: {}", pingMsg);
-                    webSocket.send(pingMsg);
-                    pongTimeoutTask = scheduler.schedule(() -> {
-                        if (awaitingPong.get()) {
-                            LOGGER.warn("Pong timeout, reconnecting...");
-                            reconnect("Pong timeout", emitter);
-                        }
-                    }, PONG_TIMEOUT_SEC, TimeUnit.SECONDS);
-                }
-            }, HEARTBEAT_INTERVAL_SEC, HEARTBEAT_INTERVAL_SEC, TimeUnit.SECONDS);
-        }
-
-        private void stopHeartbeat() {
-            if (heartbeatTask != null) {
-                heartbeatTask.cancel(true);
-                heartbeatTask = null;
-            }
-
-            if (pongTimeoutTask != null) {
-                pongTimeoutTask.cancel(true);
-                pongTimeoutTask = null;
-            }
-
-            awaitingPong.set(false);
-        }
-
-        private void handlePong() {
-            awaitingPong.set(false);
-            if (pongTimeoutTask != null) {
-                pongTimeoutTask.cancel(true);
-                pongTimeoutTask = null;
-            }
-        }
-
-        private boolean isPongMessage(String message) {
-            // Example: stricter JSON-based pong detection
-            return message.trim().equalsIgnoreCase("{\"op\":\"pong\"}")
-                    || message.contains("\"ret_msg\":\"pong\"");
-        }
-
-        private void reconnect(String reason, FlowableEmitter<String> emitter) {
-            if (emitter.isCancelled()) {
-                return;
-            }
-
-            if (reconnectLock.tryLock()) {
-                try {
-                    stopHeartbeat();
-                    WebSocket oldWs = webSocketRef.getAndSet(null);
-                    if (oldWs != null) {
-                        oldWs.close(1000, "Reconnecting");
-                    }
-
-                    int attempts = reconnectAttempts.incrementAndGet();
-                    if (attempts <= MAX_RECONNECT_ATTEMPTS) {
-                        long delay = Math.min(1000L * (1L << attempts), MAX_RECONNECT_DELAY_MS);
-                        LOGGER.warn("{} Attempting to reconnect in {} ms (Attempt {})", reason, delay, attempts);
-                        scheduler.schedule(() -> doConnect(emitter), delay, TimeUnit.MILLISECONDS);
-                    } else {
-                        LOGGER.error("Max reconnect attempts reached. Giving up.");
-                        emitter.onError(new RuntimeException("Max reconnect attempts reached"));
-                    }
-                } finally {
-                    reconnectLock.unlock();
-                }
-            }
-        }
+        }, HEARTBEAT_INTERVAL_SEC, HEARTBEAT_INTERVAL_SEC, TimeUnit.SECONDS);
     }
 
     private void stopHeartbeat() {
-        if (heartbeatTask != null) {
-            heartbeatTask.cancel(true);
-            heartbeatTask = null;
-        }
+        if (heartbeatTask != null) heartbeatTask.cancel(true);
+        if (pongTimeoutTask != null) pongTimeoutTask.cancel(true);
+        heartbeatTask = pongTimeoutTask = null;
+        awaitingPong = false;
+    }
 
-        if (pongTimeoutTask != null) {
-            pongTimeoutTask.cancel(true);
-            pongTimeoutTask = null;
+    private void handlePong() {
+        awaitingPong = false;
+        if (pongTimeoutTask != null) pongTimeoutTask.cancel(true);
+        pongTimeoutTask = null;
+    }
+
+    private void reconnect(FlowableEmitter<String> emitter) {
+        if (emitter.isCancelled()) return;
+        stopHeartbeat();
+        closeWebSocket();
+        if (++reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
+            long delay = Math.min(1000L * (1L << reconnectAttempts), MAX_RECONNECT_DELAY_MS);
+            scheduler.schedule(() -> doConnect(emitter), delay, TimeUnit.MILLISECONDS);
+        } else {
+            emitter.onError(new RuntimeException("Max reconnect attempts reached"));
         }
+    }
+
+    private void closeWebSocket() {
+        if (webSocket != null) {
+            webSocket.close(1000, "Client closed");
+            webSocket = null;
+        }
+    }
+
+    private boolean isSubscriptionConfirmation(String msg) {
+        return msg.contains("\"op\":\"subscribe\"") && msg.contains("\"success\":true");
+    }
+
+    private boolean isPongMessage(String msg) {
+        return msg.trim().equalsIgnoreCase("{\"op\":\"pong\"}") || msg.contains("\"ret_msg\":\"pong\"");
     }
 }
