@@ -105,8 +105,16 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             }
 
             private void sendPing(final WebSocket ws) {
-                ws.send(Requests.ofPing());
-                awaitingPong.set(true);
+                if (awaitingPong.get()) {
+                    LOGGER.warn("Previous ping didn't receive a pong. Reconnecting...");
+                    stopPing();
+                    ws.close(1000, "Ping timeout");
+                    connect(emitter);
+                } else {
+                    LOGGER.debug("Sending ping");
+                    ws.send(Requests.ofPing());
+                    awaitingPong.set(true);
+                }
             }
 
             private void stopPing() {
