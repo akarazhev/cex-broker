@@ -1,7 +1,6 @@
 package com.github.akarazhev.cexbroker;
 
-import com.github.akarazhev.cexbroker.bybit.stream.NewBybitDataFlow;
-import com.github.akarazhev.cexbroker.bybit.stream.OldBybitDataFlow;
+import com.github.akarazhev.cexbroker.bybit.stream.BybitDataFlow;
 import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -13,6 +12,6 @@ public final class DataFlows {
 
     public static Flowable<String> ofBybit() {
 //        return Flowable.create(e -> OldBybitDataFlow.create().subscribe(e), BackpressureStrategy.BUFFER);
-        return Flowable.create(e -> NewBybitDataFlow.create().subscribe(e), BackpressureStrategy.BUFFER);
+        return Flowable.create(e -> BybitDataFlow.create().subscribe(e), BackpressureStrategy.BUFFER);
     }
 }

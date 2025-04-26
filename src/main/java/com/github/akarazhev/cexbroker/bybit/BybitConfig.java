@@ -7,11 +7,8 @@ import java.util.Arrays;
 
 public final class BybitConfig {
     private static final URI WEB_SOCKET_URI = URI.create(AppConfig.getAsString("bybit.public.testnet.spot"));
-    private static final String[] TICKER_TOPICS = AppConfig.getAsString("bybit.public.ticker.topics").split(",");
-    private static final int MAX_RECONNECT_ATTEMPTS = AppConfig.getAsInt("bybit.max.reconnect.attempts");
-    private static final long MAX_RECONNECT_DELAY = AppConfig.getAsLong("bybit.max.reconnect.delay");
+    private static final String[] SUBSCRIBE_TOPICS = AppConfig.getAsString("bybit.subscribe.topics").split(",");
     private static final long PING_INTERVAL = AppConfig.getAsLong("bybit.ping.interval");
-    private static final long PONG_TIMEOUT = AppConfig.getAsLong("bybit.pong.timeout");
 
     private BybitConfig() {
         throw new UnsupportedOperationException();
@@ -21,32 +18,18 @@ public final class BybitConfig {
         return WEB_SOCKET_URI;
     }
 
-    public static String[] getTickerTopics() {
-        return TICKER_TOPICS;
-    }
-
-    public static int getMaxReconnectAttempts() {
-        return MAX_RECONNECT_ATTEMPTS;
-    }
-
-    public static long getMaxReconnectDelay() {
-        return MAX_RECONNECT_DELAY;
+    public static String[] getSubscribeTopics() {
+        return SUBSCRIBE_TOPICS;
     }
 
     public static long getPingInterval() {
         return PING_INTERVAL;
     }
 
-    public static long getPongTimeout() {
-        return PONG_TIMEOUT;
-    }
-
     public static String print() {
         return "Bybit Config {" +
                 "webSocketUri=" + getWebSocketUri() +
-                ", tickerTopics=" + Arrays.toString(getTickerTopics()) +
-                ", maxReconnectAttempts=" + getMaxReconnectAttempts() +
-                ", maxReconnectDelay=" + getMaxReconnectDelay() +
+                ", subscribeTopics=" + Arrays.toString(getSubscribeTopics()) +
                 ", pingInterval=" + getPingInterval() +
                 '}';
     }

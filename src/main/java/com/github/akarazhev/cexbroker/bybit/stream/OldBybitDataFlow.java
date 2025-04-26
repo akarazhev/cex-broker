@@ -1,7 +1,6 @@
 package com.github.akarazhev.cexbroker.bybit.stream;
 
 import com.github.akarazhev.cexbroker.bybit.BybitConfig;
-import com.github.akarazhev.cexbroker.bybit.request.BybitRequest;
 import com.github.akarazhev.cexbroker.net.Clients;
 import com.github.akarazhev.cexbroker.net.EventListener;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -21,10 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.github.akarazhev.cexbroker.bybit.BybitConfig.getMaxReconnectAttempts;
-import static com.github.akarazhev.cexbroker.bybit.BybitConfig.getMaxReconnectDelay;
 import static com.github.akarazhev.cexbroker.bybit.BybitConfig.getPingInterval;
-import static com.github.akarazhev.cexbroker.bybit.BybitConfig.getPongTimeout;
 
 public final class OldBybitDataFlow implements FlowableOnSubscribe<String> {
     private static final Logger LOGGER = LoggerFactory.getLogger(OldBybitDataFlow.class);
@@ -51,7 +47,7 @@ public final class OldBybitDataFlow implements FlowableOnSubscribe<String> {
             public void onOpen() {
                 LOGGER.info("WebSocket connection opened");
                 reconnectAttempts.set(0);
-                final String subscriptionRequest = BybitRequest.ofSubscription(BybitConfig.getTickerTopics());
+                final String subscriptionRequest = Requests.ofSubscription(BybitConfig.getSubscribeTopics());
                 // Avoid logging sensitive data
                 LOGGER.debug("Sending subscription request (length={}): [REDACTED]", subscriptionRequest.length());
                 WebSocketClient ws = client.get();
@@ -100,9 +96,9 @@ public final class OldBybitDataFlow implements FlowableOnSubscribe<String> {
                             }
                         }
 
-                        while (reconnectAttempts.get() < getMaxReconnectAttempts()) {
+                        while (reconnectAttempts.get() < 10) {
                             final int attempts = reconnectAttempts.getAndIncrement();
-                            final long delay = Math.min(1000L * (1L << attempts), getMaxReconnectDelay());
+                            final long delay = Math.min(1000L * (1L << attempts), 30000);
                             LOGGER.warn("{}. Attempting to reconnect in {} ms... (Attempt {})", reason, delay, attempts + 1);
                             try {
                                 WebSocketClient newClient = Clients.ofWebSocket(BybitConfig.getWebSocketUri(), this);
@@ -162,7 +158,7 @@ public final class OldBybitDataFlow implements FlowableOnSubscribe<String> {
                         reconnect("Ping timeout");
                     } else {
                         LOGGER.debug("Sending ping");
-                        ws.send(BybitRequest.ofPing());
+                        ws.send(Requests.ofPing());
                         awaitingPong.set(true);
                         schedulePongTimeout();
                     }
@@ -171,7 +167,7 @@ public final class OldBybitDataFlow implements FlowableOnSubscribe<String> {
 
             private void schedulePongTimeout() {
                 cancelPongTimeout();
-                pongTimeout = Flowable.timer(getPongTimeout(), TimeUnit.MILLISECONDS)
+                pongTimeout = Flowable.timer(10000, TimeUnit.MILLISECONDS)
                         .subscribe($ -> {
                             if (awaitingPong.get()) {
                                 LOGGER.warn("Pong not received within timeout. Reconnecting...");

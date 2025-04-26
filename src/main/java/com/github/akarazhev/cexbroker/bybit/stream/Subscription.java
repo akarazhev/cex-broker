@@ -1,4 +1,4 @@
-package com.github.akarazhev.cexbroker.bybit.request;
+package com.github.akarazhev.cexbroker.bybit.stream;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

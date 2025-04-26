@@ -6,7 +6,6 @@ import com.github.akarazhev.cexbroker.bybit.stream.BybitMapper;
 import com.github.akarazhev.cexbroker.bybit.stream.BybitSubscriber;
 import com.github.akarazhev.cexbroker.kafka.KafkaConfig;
 import com.github.akarazhev.cexbroker.stream.StreamHandler;
-import com.github.akarazhev.cexbroker.kafka.StreamProducer;
 import com.github.akarazhev.cexbroker.stream.Subscriber;
 import io.reactivex.rxjava3.disposables.Disposable;
 import org.slf4j.Logger;
