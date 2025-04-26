@@ -53,16 +53,18 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
             @Override
             public void onOpen(final WebSocket ws, final Response response) {
-                LOGGER.info("WebSocket opened: {}", response);
+                LOGGER.debug("WebSocket opened: {}", response);
                 ws.send(Requests.ofSubscription(BybitConfig.getSubscribeTopics()));
             }
 
             @Override
             public void onMessage(final WebSocket ws, final String text) {
                 if (isSubscription(text)) {
-                    handleSubscription(ws, text);
+                    LOGGER.debug("Received subscription message: {}", text);
+                    handleSubscription(ws);
                 } else if (isPong(text)) {
-                    handlePong(text);
+                    LOGGER.debug("Received pong message: {}", text);
+                    awaitingPong.set(false);
                 } else {
                     LOGGER.info("Received message: {}", text);
                     emitter.onNext(text);
@@ -71,11 +73,13 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
             @Override
             public void onClosed(final WebSocket ws, int code, final String reason) {
-                LOGGER.info("WebSocket closed with code: {}, reason: {}", code, reason);
                 if (emitter.isCancelled()) {
+                    LOGGER.warn("WebSocket closed with code: {}, reason: {}", code, reason);
                     stopPing();
+                    ws.close(1000, "Cancelled");
                     emitter.onComplete();
                 } else {
+                    LOGGER.warn("Reconnecting because of closed connection...");
                     sleep();
                     connect(emitter);
                 }
@@ -83,18 +87,19 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
             @Override
             public void onFailure(final WebSocket ws, final Throwable t, final Response response) {
-                LOGGER.error("WebSocket error: {}", t.getMessage());
                 if (emitter.isCancelled()) {
+                    LOGGER.error("WebSocket error: {}", t.getMessage());
                     stopPing();
+                    ws.close(1000, "Cancelled");
                     emitter.onError(t);
                 } else {
+                    LOGGER.warn("Reconnecting because of error...");
                     sleep();
                     connect(emitter);
                 }
             }
 
-            private void handleSubscription(final WebSocket ws, final String text) {
-                LOGGER.info("Received subscription message: {}", text);
+            private void handleSubscription(final WebSocket ws) {
                 pingDisposable = Flowable.interval(BybitConfig.getPingInterval(), TimeUnit.MILLISECONDS)
                         .subscribe($ -> sendPing(ws), t -> LOGGER.error("Heartbeat error", t));
             }
@@ -111,11 +116,6 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
                 }
             }
 
-            private void handlePong(String text) {
-                LOGGER.info("Received pong message: {}", text);
-                awaitingPong.set(false);
-            }
-
             private void sleep() {
                 try {
                     TimeUnit.SECONDS.sleep(5);
@@ -126,12 +126,15 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
         }
 
         webSocket = client.newWebSocket(request, new BybitDataFlowListener(emitter));
-        emitter.setCancellable(() -> closeWebSocket("Cancelled"));
+        emitter.setCancellable(() -> {
+            LOGGER.info("Disconnecting...");
+//            closeWebSocket();
+        });
     }
 
-    private void closeWebSocket(final String message) {
+    private void closeWebSocket() {
         if (webSocket != null) {
-            webSocket.close(1000, message);
+            webSocket.close(1000, "Cancelled");
             webSocket = null;
         }
     }
