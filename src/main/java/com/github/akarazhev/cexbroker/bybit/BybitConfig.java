@@ -9,6 +9,7 @@ public final class BybitConfig {
     private static final URI WEB_SOCKET_URI = URI.create(AppConfig.getAsString("bybit.public.testnet.spot"));
     private static final String[] SUBSCRIBE_TOPICS = AppConfig.getAsString("bybit.subscribe.topics").split(",");
     private static final long PING_INTERVAL = AppConfig.getAsLong("bybit.ping.interval");
+    private static final long RECONNECT_INTERVAL = AppConfig.getAsLong("bybit.reconnect.interval");
 
     private BybitConfig() {
         throw new UnsupportedOperationException();
@@ -26,11 +27,16 @@ public final class BybitConfig {
         return PING_INTERVAL;
     }
 
+    public static long getReconnectInterval() {
+        return RECONNECT_INTERVAL;
+    }
+
     public static String print() {
         return "Bybit Config {" +
                 "webSocketUri=" + getWebSocketUri() +
                 ", subscribeTopics=" + Arrays.toString(getSubscribeTopics()) +
                 ", pingInterval=" + getPingInterval() +
+                ", reconnectInterval=" + getReconnectInterval() +
                 '}';
     }
 }

@@ -41,12 +41,12 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
     }
 
     private void connect(final FlowableEmitter<String> emitter) {
-        class BybitDataFlowListener extends WebSocketListener {
+        class DataFlowListener extends WebSocketListener {
             private final FlowableEmitter<String> emitter;
             private final AtomicBoolean awaitingPong;
             private Disposable pingDisposable;
 
-            public BybitDataFlowListener(final FlowableEmitter<String> emitter) {
+            public DataFlowListener(final FlowableEmitter<String> emitter) {
                 this.emitter = emitter;
                 this.awaitingPong = new AtomicBoolean(false);
             }
@@ -118,24 +118,25 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
             private void sleep() {
                 try {
-                    TimeUnit.SECONDS.sleep(5);
-                } catch (InterruptedException e) {
+                    TimeUnit.MILLISECONDS.sleep(BybitConfig.getReconnectInterval());
+                } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
             }
         }
 
-        webSocket = client.newWebSocket(request, new BybitDataFlowListener(emitter));
+        webSocket = client.newWebSocket(request, new DataFlowListener(emitter));
         emitter.setCancellable(() -> {
-            LOGGER.info("Disconnecting...");
-//            closeWebSocket();
-        });
-    }
+            if (emitter.isCancelled()) {
+                if (webSocket != null) {
+                    LOGGER.info("WebSocket closing...");
+                    webSocket.close(1000, "Cancelled");
+                    webSocket = null;
+                }
 
-    private void closeWebSocket() {
-        if (webSocket != null) {
-            webSocket.close(1000, "Cancelled");
-            webSocket = null;
-        }
+                LOGGER.info("Shutting down client...");
+                client.dispatcher().executorService().shutdown();
+            }
+        });
     }
 }
