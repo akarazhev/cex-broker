@@ -43,11 +43,11 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
     private void connect(final FlowableEmitter<String> emitter) {
         final class DataFlowListener extends WebSocketListener {
-            private final AtomicBoolean awaitingPong;
-            private Disposable pingDisposable;
+            private final AtomicBoolean isAwaitingPong;
+            private Disposable ping;
 
             public DataFlowListener() {
-                this.awaitingPong = new AtomicBoolean(false);
+                this.isAwaitingPong = new AtomicBoolean(false);
             }
 
             @Override
@@ -60,10 +60,21 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             public void onMessage(final WebSocket ws, final String text) {
                 if (isSubscription(text)) {
                     LOGGER.debug("Received subscription message: {}", text);
-                    startPing(ws);
+                    ping = Flowable.interval(BybitConfig.getPingInterval(), TimeUnit.MILLISECONDS)
+                            .subscribe($ -> {
+                                if (isAwaitingPong.get()) {
+                                    LOGGER.warn("Previous ping didn't receive a pong.");
+                                    stopPing();
+                                    ws.close(1000, "Ping timeout");
+                                } else {
+                                    LOGGER.debug("Sending ping");
+                                    ws.send(Requests.ofPing());
+                                    isAwaitingPong.set(true);
+                                }
+                            }, t -> LOGGER.error("Heartbeat error", t));
                 } else if (isPong(text)) {
                     LOGGER.debug("Received pong message: {}", text);
-                    awaitingPong.set(false);
+                    isAwaitingPong.set(false);
                 } else {
                     LOGGER.info("Received message: {}", text);
                     emitter.onNext(text);
@@ -104,27 +115,10 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
                 }
             }
 
-            private void startPing(final WebSocket ws) {
-                pingDisposable = Flowable.interval(BybitConfig.getPingInterval(), TimeUnit.MILLISECONDS)
-                        .subscribe($ -> sendPing(ws), t -> LOGGER.error("Heartbeat error", t));
-            }
-
             private void stopPing() {
-                if (pingDisposable != null && !pingDisposable.isDisposed()) {
-                    pingDisposable.dispose();
-                    awaitingPong.set(false);
-                }
-            }
-
-            private void sendPing(final WebSocket ws) {
-                if (awaitingPong.get()) {
-                    LOGGER.warn("Previous ping didn't receive a pong. Reconnecting...");
-                    stopPing();
-                    ws.close(1000, "Ping timeout");
-                } else {
-                    LOGGER.debug("Sending ping");
-                    ws.send(Requests.ofPing());
-                    awaitingPong.set(true);
+                if (ping != null && !ping.isDisposed()) {
+                    ping.dispose();
+                    isAwaitingPong.set(false);
                 }
             }
 
