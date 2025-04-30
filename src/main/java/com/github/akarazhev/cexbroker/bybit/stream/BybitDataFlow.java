@@ -43,12 +43,10 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
     private void connect(final FlowableEmitter<String> emitter) {
         final class DataFlowListener extends WebSocketListener {
-            private final FlowableEmitter<String> emitter;
             private final AtomicBoolean awaitingPong;
             private Disposable pingDisposable;
 
-            public DataFlowListener(final FlowableEmitter<String> emitter) {
-                this.emitter = emitter;
+            public DataFlowListener() {
                 this.awaitingPong = new AtomicBoolean(false);
             }
 
@@ -140,16 +138,13 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             }
         }
 
-        final var request = new Request.Builder()
-                .url(BybitConfig.getWebSocketUri().toString())
-                .build();
-        webSocket = client.newWebSocket(request, new DataFlowListener(emitter));
+        final var request = new Request.Builder().url(BybitConfig.getWebSocketUri().toString()).build();
+        webSocket = client.newWebSocket(request, new DataFlowListener());
         emitter.setCancellable(() -> {
             if (emitter.isCancelled()) {
                 if (webSocket != null) {
                     LOGGER.info("WebSocket closing...");
                     webSocket.close(1000, "Cancelled");
-                    webSocket = null;
                 }
 
                 LOGGER.info("Shutting down client...");
