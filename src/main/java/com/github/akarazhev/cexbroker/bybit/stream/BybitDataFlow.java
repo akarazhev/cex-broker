@@ -92,59 +92,68 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             }
 
             @Override
-            public void onClosed(final WebSocket ws, int code, final String reason) {
-                if (emitter.isCancelled()) {
-                    LOGGER.warn("WebSocket closed with code: {}, reason: {}", code, reason);
-                    stopPing();
-                    ws.close(1000, "Cancelled");
-                    emitter.onComplete();
-                } else {
-                    LOGGER.warn("Reconnecting because of closed connection...");
-                    sleep();
+            public void onClosing(final WebSocket ws, int code, final String reason) {
+                ws.close(1000, "Connection closing");
+                stopPing();
+                if (!emitter.isCancelled()) {
+                    LOGGER.warn("Reconnecting because of closing connection with the code: {}, reason: {}", code, reason);
+                    sleep(BybitConfig.getReconnectInterval());
                     connect(emitter);
                 }
             }
 
             @Override
-            public void onFailure(final WebSocket ws, final Throwable t, final Response response) {
+            public void onClosed(final WebSocket ws, int code, final String reason) {
+                ws.close(1000, "Connection closed");
+                stopPing();
                 if (emitter.isCancelled()) {
-                    LOGGER.error("WebSocket error: {}", t.getMessage());
-                    stopPing();
-                    ws.close(1000, "Cancelled");
+                    LOGGER.warn("Connection closed with the code: {}, reason: {}", code, reason);
+                    emitter.onComplete();
+                }
+            }
+
+            @Override
+            public void onFailure(final WebSocket ws, final Throwable t, final Response response) {
+                ws.close(1000, "Connection failed");
+                stopPing();
+                if (emitter.isCancelled()) {
+                    LOGGER.error("Connection failed: {}", t.getMessage());
                     emitter.onError(t);
                 } else {
-                    LOGGER.warn("Reconnecting because of error...");
-                    sleep();
+                    LOGGER.warn("Reconnecting because of failure: {}", t.getMessage());
+                    sleep(BybitConfig.getReconnectInterval());
                     connect(emitter);
                 }
             }
 
             private void stopPing() {
                 if (ping != null && !ping.isDisposed()) {
+                    LOGGER.warn("Stop pinging...");
                     ping.dispose();
                     isAwaitingPong.set(false);
                 }
             }
 
-            private void sleep() {
+            private void sleep(long timeout) {
                 try {
-                    TimeUnit.MILLISECONDS.sleep(BybitConfig.getReconnectInterval());
+                    TimeUnit.MILLISECONDS.sleep(timeout);
                 } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
             }
         }
 
-        final var request = new Request.Builder().url(BybitConfig.getWebSocketUri().toString()).build();
-        webSocket = client.newWebSocket(request, new DataFlowListener());
+        final var url = BybitConfig.getWebSocketUri().toString();
+        webSocket = client.newWebSocket(new Request.Builder().url(url).build(), new DataFlowListener());
+        client.connectionPool().evictAll();
         emitter.setCancellable(() -> {
             if (emitter.isCancelled()) {
                 if (webSocket != null) {
                     LOGGER.info("WebSocket closing...");
-                    webSocket.close(1000, "Cancelled");
+                    webSocket.close(1000, "Connection closed");
                 }
 
-                LOGGER.info("Shutting down client...");
+                LOGGER.info("Shutting down the client...");
                 client.dispatcher().executorService().shutdown();
             }
         });
