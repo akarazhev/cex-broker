@@ -76,15 +76,19 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
                     LOGGER.debug("Received pong message: {}", text);
                     isAwaitingPong.set(false);
                 } else {
-                    LOGGER.info("Received message: {}", text);
-                    emitter.onNext(text);
+                    if (!emitter.isCancelled()) {
+                        LOGGER.debug("Received message: {}", text);
+                        emitter.onNext(text);
+                    }
                 }
             }
 
             @Override
             public void onMessage(final WebSocket ws, final ByteString bytes) {
-                LOGGER.debug("Received bytes: {}", bytes.hex());
-                emitter.onNext(bytes.utf8());
+                if (!emitter.isCancelled()) {
+                    LOGGER.debug("Received bytes: {}", bytes.hex());
+                    onMessage(ws, bytes.utf8());
+                }
             }
 
             @Override
