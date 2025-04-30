@@ -121,7 +121,6 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
                     LOGGER.warn("Previous ping didn't receive a pong. Reconnecting...");
                     stopPing();
                     ws.close(1000, "Ping timeout");
-                    connect(emitter);
                 } else {
                     LOGGER.debug("Sending ping");
                     ws.send(Requests.ofPing());
