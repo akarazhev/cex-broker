@@ -14,8 +14,8 @@ public final class DataFlows {
         throw new UnsupportedOperationException();
     }
 
-    public static Flowable<String> ofBybit() {
+    public static Flowable<String> ofBybit(final String url, final String[] topics) {
         LOGGER.info(BybitConfig.print());
-        return Flowable.create(e -> BybitDataFlow.create().subscribe(e), BackpressureStrategy.BUFFER);
+        return Flowable.create(e -> BybitDataFlow.create(url, topics).subscribe(e), BackpressureStrategy.BUFFER);
     }
 }

@@ -2,12 +2,11 @@ package com.github.akarazhev.cexbroker.bybit;
 
 import com.github.akarazhev.cexbroker.config.AppConfig;
 
-import java.net.URI;
 import java.util.Arrays;
 
 public final class BybitConfig {
-    private static final URI WEB_SOCKET_URI = URI.create(AppConfig.getAsString("bybit.public.testnet.spot"));
-    private static final String[] SUBSCRIBE_TOPICS = AppConfig.getAsString("bybit.subscribe.topics").split(",");
+    private static final String PUBLIC_TESTNET_SPOT = AppConfig.getAsString("bybit.public.testnet.spot");
+    private static final String[] PUBLIC_SUBSCRIBE_TOPICS = AppConfig.getAsString("bybit.public.subscribe.topics").split(",");
     private static final long PING_INTERVAL = AppConfig.getAsLong("bybit.ping.interval");
     private static final long RECONNECT_INTERVAL = AppConfig.getAsLong("bybit.reconnect.interval");
 
@@ -15,12 +14,12 @@ public final class BybitConfig {
         throw new UnsupportedOperationException();
     }
 
-    public static URI getWebSocketUri() {
-        return WEB_SOCKET_URI;
+    public static String getPublicTestnetSpot() {
+        return PUBLIC_TESTNET_SPOT;
     }
 
-    public static String[] getSubscribeTopics() {
-        return SUBSCRIBE_TOPICS;
+    public static String[] getPublicSubscribeTopics() {
+        return PUBLIC_SUBSCRIBE_TOPICS;
     }
 
     public static long getPingInterval() {
@@ -33,8 +32,8 @@ public final class BybitConfig {
 
     public static String print() {
         return "Bybit Config {" +
-                "webSocketUri=" + getWebSocketUri() +
-                ", subscribeTopics=" + Arrays.toString(getSubscribeTopics()) +
+                "publicTestnetSpot=" + getPublicTestnetSpot() +
+                ", publicSubscribeTopics=" + Arrays.toString(getPublicSubscribeTopics()) +
                 ", pingInterval=" + getPingInterval() +
                 ", reconnectInterval=" + getReconnectInterval() +
                 '}';

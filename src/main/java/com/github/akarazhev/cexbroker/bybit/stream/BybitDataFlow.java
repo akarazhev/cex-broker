@@ -24,16 +24,20 @@ import static com.github.akarazhev.cexbroker.bybit.stream.Responses.isSubscripti
 public final class BybitDataFlow implements FlowableOnSubscribe<String> {
     private static final Logger LOGGER = LoggerFactory.getLogger(BybitDataFlow.class);
     private final OkHttpClient client;
+    private final Request request;
+    private final String[] topics;
     private WebSocket webSocket;
 
-    private BybitDataFlow() {
+    private BybitDataFlow(final String url, final String[] topics) {
         this.client = new OkHttpClient.Builder()
                 .readTimeout(0, TimeUnit.MILLISECONDS)
                 .build();
+        this.request = new Request.Builder().url(url).build();
+        this.topics = topics;
     }
 
-    public static BybitDataFlow create() {
-        return new BybitDataFlow();
+    public static BybitDataFlow create(final String url, final String[] topics) {
+        return new BybitDataFlow(url, topics);
     }
 
     @Override
@@ -53,7 +57,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             @Override
             public void onOpen(final WebSocket ws, final Response response) {
                 LOGGER.debug("WebSocket opened: {}", response);
-                ws.send(Requests.ofSubscription(BybitConfig.getSubscribeTopics()));
+                ws.send(Requests.ofSubscription(topics));
             }
 
             @Override
@@ -142,8 +146,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             }
         }
 
-        final var url = BybitConfig.getWebSocketUri().toString();
-        webSocket = client.newWebSocket(new Request.Builder().url(url).build(), new DataFlowListener());
+        webSocket = client.newWebSocket(request, new DataFlowListener());
         emitter.setCancellable(() -> {
             if (emitter.isCancelled()) {
                 if (webSocket != null) {
