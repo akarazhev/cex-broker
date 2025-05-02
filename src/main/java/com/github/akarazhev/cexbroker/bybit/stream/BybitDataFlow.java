@@ -64,8 +64,7 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
                             .subscribe($ -> {
                                 if (isAwaitingPong.get()) {
                                     LOGGER.warn("Previous ping didn't receive a pong.");
-                                    stopPing();
-                                    ws.close(1000, "Ping timeout");
+                                    closeWsStopPing(ws, "Ping timeout");
                                 } else {
                                     LOGGER.debug("Sending ping");
                                     ws.send(Requests.ofPing());
@@ -93,19 +92,16 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
             @Override
             public void onClosing(final WebSocket ws, int code, final String reason) {
-                ws.close(1000, "Connection closing");
-                stopPing();
+                closeWsStopPing(ws, "Connection closing");
                 if (!emitter.isCancelled()) {
                     LOGGER.warn("Reconnecting because of closing connection with the code: {}, reason: {}", code, reason);
-                    sleep(BybitConfig.getReconnectInterval());
-                    connect(emitter);
+                    reconnect();
                 }
             }
 
             @Override
             public void onClosed(final WebSocket ws, int code, final String reason) {
-                ws.close(1000, "Connection closed");
-                stopPing();
+                closeWsStopPing(ws, "Connection closed");
                 if (emitter.isCancelled()) {
                     LOGGER.warn("Connection closed with the code: {}, reason: {}", code, reason);
                     emitter.onComplete();
@@ -114,31 +110,32 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
             @Override
             public void onFailure(final WebSocket ws, final Throwable t, final Response response) {
-                ws.close(1000, "Connection failed");
-                stopPing();
+                closeWsStopPing(ws, "Connection failed");
                 if (emitter.isCancelled()) {
                     LOGGER.error("Connection failed: {}", t.getMessage());
                     emitter.onError(t);
                 } else {
                     LOGGER.warn("Reconnecting because of failure: {}", t.getMessage());
-                    sleep(BybitConfig.getReconnectInterval());
-                    connect(emitter);
+                    reconnect();
                 }
             }
 
-            private void stopPing() {
+            private void reconnect() {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(BybitConfig.getReconnectInterval());
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+
+                connect(emitter);
+            }
+
+            private void closeWsStopPing(final WebSocket ws, final String reason) {
+                ws.close(1000, reason);
                 if (ping != null && !ping.isDisposed()) {
                     LOGGER.warn("Stop pinging...");
                     ping.dispose();
                     isAwaitingPong.set(false);
-                }
-            }
-
-            private void sleep(long timeout) {
-                try {
-                    TimeUnit.MILLISECONDS.sleep(timeout);
-                } catch (final InterruptedException e) {
-                    Thread.currentThread().interrupt();
                 }
             }
         }
