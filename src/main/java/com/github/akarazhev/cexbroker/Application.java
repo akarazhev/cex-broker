@@ -1,10 +1,9 @@
 package com.github.akarazhev.cexbroker;
 
-import com.github.akarazhev.cexbroker.bybit.BybitConfig;
 import com.github.akarazhev.cexbroker.bybit.stream.BybitFilter;
 import com.github.akarazhev.cexbroker.bybit.stream.BybitMapper;
 import com.github.akarazhev.cexbroker.bybit.stream.BybitSubscriber;
-import com.github.akarazhev.cexbroker.kafka.KafkaConfig;
+//import com.github.akarazhev.cexbroker.kafka.StreamProducer;
 import com.github.akarazhev.cexbroker.stream.StreamHandler;
 import com.github.akarazhev.cexbroker.stream.Subscriber;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -19,8 +18,6 @@ public final class Application {
     public static void main(final String[] args) {
         final long t = System.currentTimeMillis();
         LOGGER.info("Starting CEX Broker...");
-        LOGGER.info(BybitConfig.print());
-        LOGGER.info(KafkaConfig.print());
 //        final StreamHandler bybitHandler = new StreamProducer();
         final StreamHandler consoleHandler = new StreamHandler() {
             @Override

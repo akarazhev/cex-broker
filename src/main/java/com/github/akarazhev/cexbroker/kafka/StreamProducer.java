@@ -13,6 +13,7 @@ public final class StreamProducer implements StreamHandler {
     private final KafkaProducer<String, Map<String, Object>> producer;
 
     public StreamProducer() {
+        LOGGER.info(KafkaConfig.print());
         this.producer = new KafkaProducer<>(KafkaConfig.getKafkaProperties());
     }
 
