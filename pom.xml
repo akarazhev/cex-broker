@@ -16,7 +16,6 @@
         <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
         <maven.assembly.plugin.version>3.7.1</maven.assembly.plugin.version>
         <rxjava.version>3.1.10</rxjava.version>
-        <java-webSocket.version>1.6.0</java-webSocket.version>
         <okhttp.version>4.12.0</okhttp.version>
         <kafka-clients.version>3.9.0</kafka-clients.version>
         <jackson-databind.version>2.18.3</jackson-databind.version>
@@ -29,12 +28,6 @@
             <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
             <version>${rxjava.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.java-websocket/Java-WebSocket -->
-        <dependency>
-            <groupId>org.java-websocket</groupId>
-            <artifactId>Java-WebSocket</artifactId>
-            <version>${java-webSocket.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp -->
         <dependency>
