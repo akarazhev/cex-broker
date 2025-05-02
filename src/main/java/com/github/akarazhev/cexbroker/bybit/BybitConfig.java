@@ -5,14 +5,16 @@ import com.github.akarazhev.cexbroker.config.AppConfig;
 import java.util.Arrays;
 
 public final class BybitConfig {
-    // Endpoints are defined in application.properties
+    // Public endpoints are defined in application.properties
     private static final String PUBLIC_TESTNET_SPOT = AppConfig.getAsString("bybit.public.testnet.spot");
     private static final String PUBLIC_TESTNET_LINEAR = AppConfig.getAsString("bybit.public.testnet.linear");
     private static final String PUBLIC_TESTNET_INVERSE = AppConfig.getAsString("bybit.public.testnet.inverse");
     private static final String PUBLIC_TESTNET_OPTION = AppConfig.getAsString("bybit.public.testnet.option");
     private static final String PUBLIC_TESTNET_SPREAD = AppConfig.getAsString("bybit.public.testnet.spread");
-    // Topics are defined in application.properties
+    // Public topics are defined in application.properties
     private static final String[] PUBLIC_SUBSCRIBE_TOPICS = AppConfig.getAsString("bybit.public.subscribe.topics").split(",");
+    // Private topics are defined in application.properties
+    private static final String[] PRIVATE_SUBSCRIBE_TOPICS = AppConfig.getAsString("bybit.private.subscribe.topics").split(",");
     // Ping interval is defined in application.properties
     private static final long PING_INTERVAL = AppConfig.getAsLong("bybit.ping.interval");
     // Reconnect interval are defined in application.properties
@@ -46,6 +48,10 @@ public final class BybitConfig {
         return PUBLIC_SUBSCRIBE_TOPICS;
     }
 
+    public static String[] getPrivateSubscribeTopics() {
+        return PRIVATE_SUBSCRIBE_TOPICS;
+    }
+
     public static long getPingInterval() {
         return PING_INTERVAL;
     }
@@ -62,6 +68,7 @@ public final class BybitConfig {
                 ", publicTestnetOption=" + getPublicTestnetOption() +
                 ", publicTestnetSpread=" + getPublicTestnetSpread() +
                 ", publicSubscribeTopics=" + Arrays.toString(getPublicSubscribeTopics()) +
+                ", privateSubscribeTopics=" + Arrays.toString(getPrivateSubscribeTopics()) +
                 ", pingInterval=" + getPingInterval() +
                 ", reconnectInterval=" + getReconnectInterval() +
                 '}';
