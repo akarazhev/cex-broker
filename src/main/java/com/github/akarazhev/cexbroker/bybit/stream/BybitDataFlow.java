@@ -121,6 +121,8 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
             }
 
             private void reconnect() {
+                client.connectionPool().evictAll();
+
                 try {
                     TimeUnit.MILLISECONDS.sleep(BybitConfig.getReconnectInterval());
                 } catch (final InterruptedException e) {
@@ -142,7 +144,6 @@ public final class BybitDataFlow implements FlowableOnSubscribe<String> {
 
         final var url = BybitConfig.getWebSocketUri().toString();
         webSocket = client.newWebSocket(new Request.Builder().url(url).build(), new DataFlowListener());
-        client.connectionPool().evictAll();
         emitter.setCancellable(() -> {
             if (emitter.isCancelled()) {
                 if (webSocket != null) {
