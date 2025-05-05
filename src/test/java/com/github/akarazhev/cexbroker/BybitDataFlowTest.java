@@ -26,8 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-class DataFlowsTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataFlowsTest.class);
+class BybitDataFlowTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BybitDataFlowTest.class);
     private Disposable subscription;
 
     @AfterEach
@@ -39,7 +39,7 @@ class DataFlowsTest {
     }
 
     @Test
-    void ofBybit_shouldReceiveDataFromWebSocket() {
+    void shouldReceiveDataFromWebSocket() {
         final var latch = new CountDownLatch(1);
         final List<Map<String, Object>> receivedData = new ArrayList<>();
         final var hasError = new AtomicBoolean(false);
@@ -73,7 +73,7 @@ class DataFlowsTest {
     }
 
     @Test
-    void ofBybit_shouldHandleMultipleMessages() {
+    void shouldHandleMultipleMessages() {
         final var expectedMessageCount = 3;
         final var latch = new CountDownLatch(expectedMessageCount);
         final List<Map<String, Object>> receivedData = new ArrayList<>();
@@ -104,7 +104,7 @@ class DataFlowsTest {
     }
 
     @Test
-    void dataFlows_constructorShouldThrowException() {
+    void constructorShouldThrowException() {
         // Testing private constructor for code coverage
         try {
             // Use reflection to access the private constructor
@@ -121,7 +121,7 @@ class DataFlowsTest {
     }
 
     @Test
-    void ofBybit_shouldHandleInvalidUrl() {
+    void shouldHandleInvalidUrl() {
         // Arrange
         final var latch = new CountDownLatch(1);
         final var hasError = new AtomicBoolean(false);
@@ -166,7 +166,7 @@ class DataFlowsTest {
     }
 
     @Test
-    void ofBybit_shouldHandleBackpressure() {
+    void shouldHandleBackpressure() {
         // This test verifies that the BUFFER backpressure strategy works correctly
         final var messageCount = 10;
         final var latch = new CountDownLatch(1);
@@ -214,7 +214,7 @@ class DataFlowsTest {
     }
 
     @Test
-    void ofBybit_shouldSupportMultipleSubscribers() {
+    void shouldSupportMultipleSubscribers() {
         final var latch1 = new CountDownLatch(1);
         final var latch2 = new CountDownLatch(1);
         final List<Map<String, Object>> receivedData1 = new ArrayList<>();
